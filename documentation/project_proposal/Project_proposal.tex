@@ -1,0 +1,61 @@
+ \documentclass{article}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\graphicspath{ {./images/} }
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{footnotebackref}
+%\usepackage[symbol=$\wedge$]{footnotebackref}
+%\usepackage[numberlinked=false]{footnotebackref}
+\usepackage{a4wide}
+
+\title{Project proposal}
+\author{Antoni Dąbrowski, Cezary Troska}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section{Project plan}
+We will explore the field of language modeling for the authorship identification task. We are going to test a new, proposed by us pre-training procedure on few existing models. The main idea of this method is to train feature extracting model on different book translations to guide it into a deeper understanding of language model - focusing on style, sentiment and syntax analysis, rather than text subject itself.
+
+\section{Hypothesis}
+\begin{enumerate}
+    \item Using our pre-training method will decrease amount of text needed to predict its author.
+    \item Developed during the process of pre-training the feature extracting model will provide new, valuable information to standard authorship identification algorithms, which will lead to achieving better results.
+\end{enumerate}
+
+\section{Motivation}
+Classical algorithms in general are trained on texts that are fundamentally different. Both in term of content and character. Therefore it could be hard or even impossible task for them to fully understand how each is related to an author. Our pre-training procedure will provide a model that is ``blind to'' the subject and can distinguish very subtle differences. For that reason we believe that proposed method might be beneficial.
+
+
+\section{Models we will explore}
+LSTM, GRU for feature extraction and language modeling. MLP for authorship classification.
+
+\section{Data, sources and pre-processing}
+For the chosen books we are going to look for different translations into English. Some examples
+\begin{itemize}
+    \item ``Les Miserables''; Victor Hugo; >10 translations into English
+    \item ``The Plague''; Albert Camus; >10 translations into English
+    \item ``Crime and punishment''; Fyodor Dostoevsky; >10 translations into English
+    \item ``The Count of Monte Cristo''; Alexandre Dumas; >10 translations into English
+    \item ``Madame Bovary''; Gustave Flaubert; >10 translations into English
+    \item ``Bible'';; >100 translations into English
+\end{itemize}
+As input our algorithm takes different versions (translations) of the same text. However, it will be preferable to split it into smaller chunks than whole books. Therefore we consider developing a method for a paragraph to paragraph matching.
+
+\section{Milestone}
+Preparing data and training a baseline model.
+
+\section{How will we evaluate success?}
+We are considering two methods. First: authorship classification model trained just on given data vs model with the same architecture but with pre-trained feature extraction component (only trainable section is MLP for final classification). The second method will test whether our pre-trained feature extractor will bust the performance of other models.
+
+\section{Relevant existing literature}
+\begin{itemize}
+    \item \href{https://reader.elsevier.com/reader/sd/pii/S1877050919313791?token=E79C223624500BFB669FF9BACC0506AA22D90F8B15E80D1602653D05322F0E82EFDEB89C5B0597F23413FAE3A29961F2&originRegion=eu-west-1&originCreation=20220524183711}{``A New Method to Identify Short-Text Authors Using Combinations of Machine Learning and Natural Language Processing Techniques''}; Biveeken Vijayakumara, Muhammad Marwan Muhammad Fuadb
+    \item \href{https://web.stanford.edu/class/archive/cs/cs224n/cs224n.1174/reports/2760185.pdf}{``Deep Learning based Authorship Identification''}; Chen Qian; Tianchang He; Rao Zhang
+\end{itemize}
+
+\end{document}
+
