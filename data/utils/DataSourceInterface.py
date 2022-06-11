@@ -1,5 +1,5 @@
 class Translation:
-    def __init__(self):
+    def __init__(self, path):
         self.no_lines = None
         self.no_paragraphs = None
 
