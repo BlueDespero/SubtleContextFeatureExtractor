@@ -18,7 +18,7 @@ def initialize_paragraph_mapping():
 
                 book, chapter = [next(translation_chapter_text) for _ in range(2)]
                 book = book.split(" ")[-1]
-                chapter = int(chapter.split(" ")[-1])
+                chapter = int(chapter.split(" ")[-1].split(".")[0])
 
                 if (book, chapter) not in mapping.values():
                     mapping[counter] = (book, chapter)
@@ -32,14 +32,28 @@ class BibleTranslation(Translation):
 
     def __init__(self, path):
         super().__init__(path)
+        self.lines = []
+        self.lines_of_paragraph = {}
 
-        for files in os.listdir(path):
-            with open(path, 'r', encoding="utf-8") as translation_text:
-                all_lines = translation_text.readlines()
-                self.lines = all_lines
+        for file in os.listdir(path):
+            if file.endswith("000_read.txt") or not file.startswith("eng"):
+                continue
+
+            with open(os.path.join(path, file), 'r', encoding="utf-8") as translation_chapter_text:
+
+                book, chapter = [next(translation_chapter_text) for _ in range(2)]
+                book = book.split(" ")[-1]
+                chapter = int(chapter.split(" ")[-1].split(".")[0])
+
+                all_chapter_lines = translation_chapter_text.readlines()
+
+                paragraph_id = BibleTranslation.inverse_paragraph_mapping[(book, chapter)]
+                self.lines_of_paragraph[paragraph_id] = (len(self.lines), len(self.lines) + len(all_chapter_lines) - 1)
+
+                self.lines += all_chapter_lines
 
         self.no_lines = len(self.lines)
-        self.no_paragraphs = self.no_lines
+        self.no_paragraphs = max(self.lines_of_paragraph.keys())
 
     def get_line(self, line_id):
         if 0 <= line_id < self.no_lines:
@@ -48,7 +62,14 @@ class BibleTranslation(Translation):
             raise IndexError
 
     def get_paragraph(self, paragraph_id):
-        return self.get_line(paragraph_id)
+        if paragraph_id < 0 or paragraph_id > max(BibleTranslation.paragraph_mapping.keys()):
+            raise IndexError('Paragraph of of range.')
+
+        if paragraph_id not in self.lines_of_paragraph.keys():
+            raise IndexError("%d - This translation doesn't have this paragraph." % paragraph_id)
+
+        start, finish = self.lines_of_paragraph[paragraph_id]
+        return "".join(self.lines[start:finish])
 
 
 class BibleDataSource(DataSource):
@@ -75,4 +96,4 @@ if __name__ == "__main__":
     for translation_index in random.sample(range(quran_handle.no_translations), 4):
         translation = quran_handle.get_translation(translation_index)
         print(translation.get_line(random.choice(range(translation.no_lines))))
-        print(translation.get_paragraph(random.choice(range(translation.no_paragraphs))))
+        print(translation.get_paragraph(random.choice(list(translation.lines_of_paragraph.keys()))))
