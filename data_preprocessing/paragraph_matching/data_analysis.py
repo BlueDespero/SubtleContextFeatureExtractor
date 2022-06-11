@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 def get_bible_alternative_translations(book_name='002_GEN',limit=None,**kwargs):
-    path_to_bible = r'../../data/bible'
+    path_to_bible = r'../../data/bible/translations/'
     file_names = [f for f in listdir(path_to_bible) if not isfile(join(path_to_bible, f))]
     chapter = kwargs.get('chapter','02')
     translations = dd(list)
