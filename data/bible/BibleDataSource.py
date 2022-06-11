@@ -1,11 +1,46 @@
-import ast
 import os
 import random
 
 from data.utils.DataSourceInterface import Translation, DataSource
 
 
+def initialize_paragraph_mapping():
+    mapping = {}
+    counter = 0
+
+    for translation_dict in os.listdir("translations"):
+        for file in os.listdir(os.path.join("translations", translation_dict)):
+            if file.endswith("000_read.txt") or not file.startswith("eng"):
+                continue
+
+            with open(os.path.join("translations", translation_dict, file), 'r',
+                      encoding="utf-8") as translation_chapter_text:
+
+                book, chapter = [next(translation_chapter_text) for _ in range(2)]
+                book = book.split(" ")[-1]
+                chapter = int(chapter.split(" ")[-1])
+
+                if (book, chapter) not in mapping.values():
+                    mapping[counter] = (book, chapter)
+                    counter += 1
+
+    return mapping, {v: k for k, v in mapping.items()}
+
+
 class BibleTranslation(Translation):
+    paragraph_mapping, inverse_paragraph_mapping = initialize_paragraph_mapping()
+
+    def __init__(self, path):
+        super().__init__(path)
+
+        for files in os.listdir(path):
+            with open(path, 'r', encoding="utf-8") as translation_text:
+                all_lines = translation_text.readlines()
+                self.lines = all_lines
+
+        self.no_lines = len(self.lines)
+        self.no_paragraphs = self.no_lines
+
     def get_line(self, line_id):
         if 0 <= line_id < self.no_lines:
             return self.lines[line_id]
@@ -14,16 +49,6 @@ class BibleTranslation(Translation):
 
     def get_paragraph(self, paragraph_id):
         return self.get_line(paragraph_id)
-
-    def __init__(self, path):
-        super().__init__(path)
-        with open(path, 'r', encoding="utf-8") as translation_text:
-            all_lines = translation_text.readlines()
-            metadata_separator_line = all_lines.index("{\n")
-            self.lines = all_lines[:metadata_separator_line]
-            self.metadata = ast.literal_eval("".join(all_lines[metadata_separator_line:]))
-        self.no_lines = len(self.lines)
-        self.no_paragraphs = self.no_lines
 
 
 class BibleDataSource(DataSource):
