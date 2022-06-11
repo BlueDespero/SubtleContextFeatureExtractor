@@ -1,5 +1,6 @@
 import ast
 import os
+import random
 
 from data.utils.DataSourceInterface import Translation, DataSource
 
@@ -16,9 +17,9 @@ class QuranTranslation(Translation):
 
     def __init__(self, path):
         super().__init__(path)
-        with open(path, 'r') as translation:
-            all_lines = translation.readlines()
-            metadata_separator_line = all_lines.index("{")
+        with open(path, 'r', encoding="utf-8") as translation_text:
+            all_lines = translation_text.readlines()
+            metadata_separator_line = all_lines.index("{\n")
             self.lines = all_lines[:metadata_separator_line]
             self.metadata = ast.literal_eval("".join(all_lines[metadata_separator_line:]))
         self.no_lines = len(self.lines)
@@ -42,3 +43,11 @@ class QuranDataSource(DataSource):
         for translation_name in self.all_translations_list:
             if translation_id == int(translation_name.split("-")[0]):
                 return os.path.join("translations", translation_name)
+
+
+if __name__ == "__main__":
+    quran_handle = QuranDataSource()
+    for translation_index in random.sample(range(quran_handle.no_translations), 4):
+        translation = quran_handle.get_translation(translation_index)
+        print(translation.get_line(random.choice(range(translation.no_lines))))
+        print(translation.get_paragraph(random.choice(range(translation.no_paragraphs))))
