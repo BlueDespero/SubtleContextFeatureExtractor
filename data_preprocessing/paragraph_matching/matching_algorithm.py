@@ -1,4 +1,4 @@
-from paragraph_embedding import Word2vec_matching, similarity_3
+from paragraph_embedding import Word2vec_matching, similarity_multiset_comparison
 from os import listdir
 from tqdm.auto import tqdm
 import pickle
@@ -23,9 +23,9 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         for x, paragraph_2 in enumerate(list_of_paragraphs_2):
             if center - 20 < x < center + 40:
                 if fast_mode:
-                    matching[y, x] = similarity_3(paragraph_1, paragraph_2) + 0.3
+                    matching[y, x] = similarity_multiset_comparison(paragraph_1, paragraph_2) + 0.3
                 else:
-                    matching[y, x] = w2v.similarity_4(paragraph_1, paragraph_2) + 0.3
+                    matching[y, x] = w2v.similarity_combined(paragraph_1, paragraph_2) + 0.3
         moving_average.append(np.argmax(matching[y]))
         moving_average = moving_average[1:]
 
@@ -63,9 +63,9 @@ def matching(translations, fast_mode=True, pickle_result=False):
             for x, paragraph_2 in enumerate(translation):
                 if center - 45 < x < center + 55:
                     if fast_mode:
-                        matching_matrix[y, x] = similarity_3(paragraph_1, paragraph_2) + 0.3
+                        matching_matrix[y, x] = similarity_multiset_comparison(paragraph_1, paragraph_2) + 0.3
                     else:
-                        matching_matrix[y, x] = w2v.similarity_4(paragraph_1, paragraph_2) + 0.3
+                        matching_matrix[y, x] = w2v.similarity_combined(paragraph_1, paragraph_2) + 0.3
             moving_average.append(np.argmax(matching_matrix[y]))
             moving_average = moving_average[1:]
 

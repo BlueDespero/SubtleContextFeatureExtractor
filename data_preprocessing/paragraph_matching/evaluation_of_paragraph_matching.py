@@ -1,4 +1,4 @@
-from paragraph_embedding import similarity_3
+from paragraph_embedding import similarity_multiset_comparison
 from data_analysis import get_bible_alternative_translations
 import numpy as np
 from tqdm.auto import tqdm
@@ -48,4 +48,4 @@ def similarity_metric_evaluation_based_on_bible(similarity_metric, metric_name, 
 
 
 if __name__ == '__main__':
-    similarity_metric_evaluation_based_on_bible(similarity_3, 'Multiset comparison', 'long')
+    similarity_metric_evaluation_based_on_bible(similarity_multiset_comparison, 'Multiset comparison', 'long')
