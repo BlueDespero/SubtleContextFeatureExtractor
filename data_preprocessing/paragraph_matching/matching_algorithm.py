@@ -13,8 +13,7 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         Function returns list of tuples (matched paragraphs in initial order)
         alternative to fast_mode is a more accurate model
     """
-    if not fast_mode:
-        w2v = Word2vec_matching()
+    similarity = similarity_3 if fast_mode else Word2vec_matching().similarity_4
     matching = np.zeros((len(list_of_paragraphs_1), len(list_of_paragraphs_2))).astype(np.float32)
 
     moving_average = [0 for _ in range(20)]
