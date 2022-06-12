@@ -20,6 +20,7 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
     """
     if not fast_mode:
         w2v = Word2vec_matching()
+    similarity = similarity_multiset_comparison if fast_mode else w2v.similarity_combined
     matching = np.zeros((len(list_of_paragraphs_1), len(list_of_paragraphs_2))).astype(np.float32)
 
     moving_average = [0 for _ in range(20)]
@@ -27,10 +28,7 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         center = np.median(moving_average)
         for x, paragraph_2 in enumerate(list_of_paragraphs_2):
             if center - 20 < x < center + 40:
-                if fast_mode:
-                    matching[y, x] = similarity_multiset_comparison(paragraph_1, paragraph_2) + 0.3
-                else:
-                    matching[y, x] = w2v.similarity_combined(paragraph_1, paragraph_2) + 0.3
+                matching[y, x] = similarity(paragraph_1, paragraph_2) + 0.3
         moving_average.append(np.argmax(matching[y]))
         moving_average = moving_average[1:]
 
@@ -58,6 +56,7 @@ def matching(translations, fast_mode=True, pickle_result=False):
     """
     if not fast_mode:
         w2v = Word2vec_matching()
+    similarity = similarity_multiset_comparison if fast_mode else w2v.similarity_combined
     translations.sort(key=len, reverse=True)
     central_translation, translations = translations[0], translations[1:]
     matching = {central_translation_paragraph_id: [] for central_translation_paragraph_id in
@@ -70,10 +69,7 @@ def matching(translations, fast_mode=True, pickle_result=False):
             center = np.median(moving_average)
             for x, paragraph_2 in enumerate(translation):
                 if center - 45 < x < center + 55:
-                    if fast_mode:
-                        matching_matrix[y, x] = similarity_multiset_comparison(paragraph_1, paragraph_2) + 0.3
-                    else:
-                        matching_matrix[y, x] = w2v.similarity_combined(paragraph_1, paragraph_2) + 0.3
+                    matching[y, x] = similarity(paragraph_1, paragraph_2) + 0.3
             moving_average.append(np.argmax(matching_matrix[y]))
             moving_average = moving_average[1:]
 
