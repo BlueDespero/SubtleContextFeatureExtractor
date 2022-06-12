@@ -3,8 +3,8 @@ from os import listdir
 from tqdm.auto import tqdm
 import pickle
 from datetime import datetime
-import matplotlib.pyplot as plt
 import numpy as np
+from plotting import similarities_plot
 
 
 def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_mode=True, plot_results=False,
@@ -39,18 +39,7 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         pickle.dump(matches, open(datetime.now().strftime("%d_%m_%Y__%H_%M_%S.pickle"), 'wb'))
 
     if plot_results:
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 7))
-        ax1.imshow(matching)
-        zeros = np.zeros_like(matching)
-        zeros[tuple(np.array(results).T)] = 1
-        ax2.imshow(zeros)
-        plt.suptitle("Paragraph similarity")
-        ax1.set_title('Continuous')
-        ax2.set_title('Discrete')
-        ax1.set_xlabel('Number of a paragraph in second translation')
-        ax1.set_ylabel('Number of a paragraph in first translation')
-        ax2.set_xlabel('Number of a paragraph in second translation')
-        plt.show()
+        similarities_plot(matching, 'Multiset comparison')
     return matches
 
 
@@ -106,7 +95,8 @@ if __name__ == '__main__':
 
     path = r'../../data/madame_bovary/'
     file_names = [f for f in listdir(path)]
-    translations = [get_translation(open(path + file_name, 'r', encoding='UTF-8')) for file_name in file_names]
+    translations = [get_translation(open(path + file_name, 'r', encoding='UTF-8'))[:20] for file_name in file_names]
 
-    # matching_two_translations(translations[0],translations[1],plot_results=True,pickle_result=True)
-    matching(translations, fast_mode=True, pickle_result=True)
+    matching_two_translations(translations[0], translations[1], fast_mode=True, plot_results=True,
+                              pickle_result=False)
+    # matching(translations, fast_mode=True, pickle_result=True)

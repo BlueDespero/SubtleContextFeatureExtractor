@@ -2,7 +2,6 @@ from os import listdir
 from os.path import isfile, join
 from collections import defaultdict as dd
 import os
-import numpy as np
 
 
 def get_bible_alternative_translations(book_name='002_GEN', limit=None, **kwargs):
