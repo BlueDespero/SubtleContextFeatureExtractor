@@ -7,9 +7,13 @@ from nltk.corpus import stopwords
 
 class Word2vec_matching:
     def __init__(self):
+        # Initialization of gensim model might take few seconds, however it should be executed once before process of
+        # calculating similarities
         self.model = gensim.downloader.load('word2vec-google-news-300')
 
     def similarity_simple(self, paragraph_1, paragraph_2):
+        # This function computes similarity as cosine of two paragraph embeddings
+        # Paragraph embedding is sum of embeddings of its words (except stopwords)
         def paragraph_vector(paragraph):
             list_of_tokens = tokenize(paragraph)
             return sum([self.model[word] for word in list_of_tokens
@@ -32,6 +36,8 @@ class Word2vec_matching:
 
 
 def similarity_multiset_comparison(paragraph_1, paragraph_2):
+    # In this function paragraphs are treated as multi-sets of words (except stopwords)
+    # Similarity score is size of multi-sets intersection divided by multi-sets sum
     def paragraph_preprocessing(paragraph):
         list_of_tokens = tokenize(paragraph)
         return [word for word in list_of_tokens if len(word) > 3 and word not in stopwords.words('english')]

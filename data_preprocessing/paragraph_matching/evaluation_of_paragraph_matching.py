@@ -7,8 +7,21 @@ from plotting import similarities_plot
 
 def similarity_metric_evaluation_based_on_bible(similarity_metric, metric_name, text_length='short',
                                                 number_of_joined_verses=5):
+    """
+        Bible is a good benchmark for paragraph-matching algorithms as it is perfectly aligned
+        This method uses it to check visually the performance of similarity metrics
+        Perfect metric should return diagonal matching on final plot, every difference is
+        sign of some mismatch
+
+        :param function similarity_metric: function that takes two texts (paragraphs) and returns its similarity score
+        :param string metric_name: Name of metric used in plot title
+        :param bool text_length: method provieds two testing options:
+                'short' - evaluation performed on a single chapter; paragraphs are single verses
+                'long' - evaluation performed on a single 'Holy Bible' book; paragraphs are few joined verses
+        :param int number_of_joined_verses: describes how many consecutive verses are treated as single paragraph
+    """
+
     if text_length == 'short':
-        # Based on verses of single chapter
         translations = get_bible_alternative_translations(limit=2, chapter='03')
         list_of_paragraphs_1 = []
         list_of_paragraphs_2 = []
@@ -19,7 +32,6 @@ def similarity_metric_evaluation_based_on_bible(similarity_metric, metric_name, 
             elif len(translations[i]) == 1:
                 list_of_paragraphs_1.append(translations[i][0])
     elif text_length == 'long':
-        # Based on groups of verses in a single book
         list_of_paragraphs_1 = []
         list_of_paragraphs_2 = []
         for chapter in range(1, 21):

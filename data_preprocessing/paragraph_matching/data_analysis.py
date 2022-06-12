@@ -5,6 +5,8 @@ import os
 
 
 def get_bible_alternative_translations(book_name='002_GEN', limit=None, **kwargs):
+    # Temporary function used during process of development
+    # Now its functionality can be performed using more dedicated methods
     path_to_bible = r'../../data/bible/translations/'
     file_names = [f for f in listdir(path_to_bible) if not isfile(join(path_to_bible, f))]
     chapter = kwargs.get('chapter', '02')

@@ -10,8 +10,13 @@ from plotting import similarities_plot
 def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_mode=True, plot_results=False,
                               pickle_result=False):
     """
-        Function returns list of tuples (matched paragraphs in initial order)
-        alternative to fast_mode is a more accurate model
+        :param list list_of_paragraphs_1: List of paragraphs from the first translation
+        :param list list_of_paragraphs_2: List of paragraphs from the second translation
+        :param bool fast_mode: Changes similarity metric from simple and fast to more sophisticated and accurate
+        :param bool plot_results: Switches plotting functionality
+        :param bool pickle_result: If True, list of a tuples of a corresponding paragraphs will be saved as pickle file
+        :return: List of a tuples of a corresponding paragraphs
+        :rtype: list
     """
     if not fast_mode:
         w2v = Word2vec_matching()
@@ -45,8 +50,11 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
 
 def matching(translations, fast_mode=True, pickle_result=False):
     """
-        Function returns list of tuples (matched paragraphs in initial order)
-        alternative to fast_mode is a more accurate model
+        :param list translations: List of different book translations - list of lists of strings (paragraphs)
+        :param bool fast_mode: Changes similarity metric from simple and fast to more sophisticated and accurate
+        :param bool pickle_result: If True, list of a tuples of a corresponding paragraphs will be saved as pickle file
+        :return: List of a tuples of a corresponding paragraphs
+        :rtype: list
     """
     if not fast_mode:
         w2v = Word2vec_matching()
