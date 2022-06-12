@@ -23,7 +23,8 @@ class Word2vec_matching:
         def paragraph_vector(paragraph):
             list_of_tokens = tokenize(paragraph)
             return sum([self.model[word] for word in list_of_tokens
-                        if word in self.model.key_to_index and len(word)>3 and word not in stopwords.words('english')] +
+                        if
+                        word in self.model.key_to_index and len(word) > 3 and word not in stopwords.words('english')] +
                        [np.zeros(300).astype(np.float32)])
 
         v_1 = paragraph_vector(paragraph_1)
@@ -39,16 +40,16 @@ class Word2vec_matching:
         value_2 = similarity_3(paragraph_1, paragraph_2)
         return value_1 * value_2
 
+
 def similarity_3(paragraph_1, paragraph_2):
     def paragraph_preprocessing(paragraph):
         list_of_tokens = tokenize(paragraph)
-        return [word for word in list_of_tokens if len(word)>3 and word not in stopwords.words('english')]
+        return [word for word in list_of_tokens if len(word) > 3 and word not in stopwords.words('english')]
 
     p_1 = paragraph_preprocessing(paragraph_1)
     p_2 = paragraph_preprocessing(paragraph_2)
     d_1 = dd(int)
     d_2 = dd(int)
-
 
     for element in p_1:
         d_1[element] += 1
@@ -59,16 +60,16 @@ def similarity_3(paragraph_1, paragraph_2):
     for key in d_1:
         if key not in visited:
             visited.add(key)
-            union += max(d_1[key],d_2[key])
+            union += max(d_1[key], d_2[key])
 
     for key in d_2:
         if key not in visited:
             visited.add(key)
-            union += max(d_1[key],d_2[key])
+            union += max(d_1[key], d_2[key])
 
     intersection = len([value for value in p_1 if value in p_2])
 
     if union == 0:
         return 0.0
     else:
-        return intersection/union
+        return intersection / union

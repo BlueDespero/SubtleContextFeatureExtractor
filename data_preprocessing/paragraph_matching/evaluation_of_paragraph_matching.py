@@ -59,7 +59,7 @@ def bible_evaluation_2(similarity_metric, number_of_joined_verses=5, continuous=
             temp_result.append(similarity_metric(p_1, p_2))
         if continuous:
             results.append(temp_result)
-        elif max(temp_result)==min(temp_result):
+        elif max(temp_result) == min(temp_result):
             results.append([0 for _ in range(len(temp_result))])
         else:
             results.append([1 if element == max(temp_result) else 0 for element in temp_result])
