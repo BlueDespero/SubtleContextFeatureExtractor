@@ -1,8 +1,47 @@
 import os
 import random
-from typing import Tuple
+from typing import TextIO, Tuple
 
 from data.utils.DataSourceInterface import Translation, DataSource
+
+BIBLE_LINES_PER_PARAGRAPH = 6
+
+
+def get_book_and_chapter(data_stream: TextIO) -> Tuple[str, int]:
+    """
+    Get the book and chapter information from the first two lines of the file.
+
+    :param data_stream: Data stream from which the data will be read.
+    :return: A pair of book name and chapter number.
+    :raise IOError: data_stream was read from before.
+    """
+
+    if not data_stream.tell() == 0:
+        raise IOError("This data stream was read from. For this function a fresh stream is needed.")
+
+    book, chapter = [next(data_stream) for _ in range(2)]
+    book = book.split(" ")[-1]
+    chapter = int(chapter.split(" ")[-1].split(".")[0])
+
+    return book, chapter
+
+
+def get_next_n_lines(data_stream: TextIO, n: int):
+    """
+    Return n lines (or less if not possible) from the data_stream.
+
+    :param data_stream: Data stream from which lines will be read.
+    :param n: Target amount of lines to be read from the data_stream. If reading n lines is not possible,
+        fewer lines will be returned.
+    :return: List of string lines taken from the data_stream. Up to n entries.
+    """
+    lines = []
+    for _ in range(n):
+        if new_line := next(data_stream, False):
+            lines.append(new_line)
+        else:
+            break
+    return lines
 
 
 def initialize_paragraph_mapping() -> Tuple[dict, dict]:
@@ -18,19 +57,26 @@ def initialize_paragraph_mapping() -> Tuple[dict, dict]:
 
     for translation_dict in os.listdir("translations"):
         for file in os.listdir(os.path.join("translations", translation_dict)):
+
             if file.endswith("000_read.txt") or not file.startswith("eng"):
                 continue
 
             with open(os.path.join("translations", translation_dict, file), 'r',
                       encoding="utf-8") as translation_chapter_text:
 
-                book, chapter = [next(translation_chapter_text) for _ in range(2)]
-                book = book.split(" ")[-1]
-                chapter = int(chapter.split(" ")[-1].split(".")[0])
+                book, chapter = get_book_and_chapter(translation_chapter_text)
 
-                if (book, chapter) not in mapping.values():
-                    mapping[counter] = (book, chapter)
-                    counter += 1
+                position = 0
+                no_lines_read = BIBLE_LINES_PER_PARAGRAPH
+                while no_lines_read == BIBLE_LINES_PER_PARAGRAPH:
+                    no_lines_read = len(get_next_n_lines(translation_chapter_text, BIBLE_LINES_PER_PARAGRAPH))
+                    paragraph_identifier_tuple = (book, chapter, position)
+
+                    if paragraph_identifier_tuple not in mapping.values():
+                        mapping[counter] = paragraph_identifier_tuple
+                        counter += 1
+
+                    position += no_lines_read
 
     return mapping, {v: k for k, v in mapping.items()}
 
@@ -56,22 +102,29 @@ class BibleTranslation(Translation):
         self.lines = []
         self.lines_of_paragraph = {}
 
+        # For each book and chapter of this translation load lines and set up a matching showing where each
+        # paragraph begins abd ends
         for file in os.listdir(path):
             if file.endswith("000_read.txt") or not file.startswith("eng"):
                 continue
 
             with open(os.path.join(path, file), 'r', encoding="utf-8") as translation_chapter_text:
 
-                book, chapter = [next(translation_chapter_text) for _ in range(2)]
-                book = book.split(" ")[-1]
-                chapter = int(chapter.split(" ")[-1].split(".")[0])
+                book, chapter = get_book_and_chapter(translation_chapter_text)
 
-                all_chapter_lines = translation_chapter_text.readlines()
+                position = 0
+                no_lines_read = BIBLE_LINES_PER_PARAGRAPH
+                while no_lines_read == BIBLE_LINES_PER_PARAGRAPH:
+                    lines_read = get_next_n_lines(translation_chapter_text, BIBLE_LINES_PER_PARAGRAPH)
+                    no_lines_read = len(lines_read)
 
-                paragraph_id = BibleTranslation.inverse_paragraph_mapping[(book, chapter)]
-                self.lines_of_paragraph[paragraph_id] = (len(self.lines), len(self.lines) + len(all_chapter_lines) - 1)
+                    paragraph_identifier_tuple = (book, chapter, position)
+                    id_of_tuple = BibleTranslation.inverse_paragraph_mapping[paragraph_identifier_tuple]
 
-                self.lines += all_chapter_lines
+                    self.lines_of_paragraph[id_of_tuple] = (len(self.lines), len(self.lines) + no_lines_read)
+                    self.lines += lines_read
+
+                    position += no_lines_read
 
         self.no_lines = len(self.lines)
         self.no_paragraphs = max(self.lines_of_paragraph.keys())
