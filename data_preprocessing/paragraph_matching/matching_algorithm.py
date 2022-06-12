@@ -65,13 +65,14 @@ def matching(translations, fast_mode=True, pickle_result=False):
     central_translation, translations = translations[0], translations[1:]
     matching = {central_translation_paragraph_id: [] for central_translation_paragraph_id in
                 range(len(central_translation))}
-    for translation in translations:
+    for translation_id, translation in enumerate(translations):
+        print(f"Currently working on translation number {translation_id}.")
         matching_matrix = np.zeros((len(central_translation), len(translation))).astype(np.float32)
-        moving_average = [0 for _ in range(10)]
+        moving_average = [0 for _ in range(20)]
         for y, paragraph_1 in enumerate(tqdm(central_translation)):
             center = np.median(moving_average)
             for x, paragraph_2 in enumerate(translation):
-                if center - 25 < x < center + 35:
+                if center - 45 < x < center + 55:
                     if fast_mode:
                         matching_matrix[y, x] = similarity_3(paragraph_1, paragraph_2) + 0.3
                     else:
@@ -79,7 +80,7 @@ def matching(translations, fast_mode=True, pickle_result=False):
             moving_average.append(np.argmax(matching_matrix[y]))
             moving_average = moving_average[1:]
 
-        for y, row in enumerate(matching):
+        for y, row in enumerate(matching_matrix):
             if np.min(row) != np.max(row):
                 matching[y].append(np.argmax(row))
             else:
@@ -105,7 +106,7 @@ if __name__ == '__main__':
 
     path = r'../../data/madame_bovary/'
     file_names = [f for f in listdir(path)]
-    translations = [get_translation(open(path + file_name, 'r', encoding='UTF-8'))[:20] for file_name in file_names]
+    translations = [get_translation(open(path + file_name, 'r', encoding='UTF-8')) for file_name in file_names]
 
     # matching_two_translations(translations[0],translations[1],plot_results=True,pickle_result=True)
     matching(translations, fast_mode=True, pickle_result=True)
