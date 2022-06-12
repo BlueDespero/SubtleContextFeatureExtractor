@@ -22,10 +22,7 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         center = np.median(moving_average)
         for x, paragraph_2 in enumerate(list_of_paragraphs_2):
             if center - 20 < x < center + 40:
-                if fast_mode:
-                    matching[y, x] = similarity_3(paragraph_1, paragraph_2) + 0.3
-                else:
-                    matching[y, x] = w2v.similarity_4(paragraph_1, paragraph_2) + 0.3
+                matching[y, x] = similarity(paragraph_1, paragraph_2) + 0.3
         moving_average.append(np.argmax(matching[y]))
         moving_average = moving_average[1:]
 
