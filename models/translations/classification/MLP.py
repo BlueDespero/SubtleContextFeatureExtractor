@@ -1,10 +1,25 @@
 import torch.nn as nn
 
-class MLP(nn.Module):
-    def __init__(self):
-        super(MLP, self).__init__()
-        self.fc1 = nn.Linear(10, 2)
 
-    def forward(self, x):
-        x = self.fc1(x)
-        return x
+class MLP(nn.Module):
+    def __init__(self, output_size, dimension=128):
+        super(MLP, self).__init__()
+        self.layers = nn.Sequential(nn.Linear(dimension, dimension),
+                                    nn.ReLU(),
+                                    nn.Linear(dimension, dimension),
+                                    nn.ReLU(),
+                                    nn.Linear(dimension, output_size),
+                                    nn.Sigmoid())
+
+    def forward(self, paragraph_embeddings):
+        """
+            :param torch.Tensor paragraph_embeddings: Two dimensional tensor (shape = (batch_size, dimension)) produced
+                by a feature extractor
+            :return: Predictions of given text author - vector of probabilities
+            :rtype: torch.Tensor
+        """
+        return self.layers.forward(paragraph_embeddings)
+
+
+if __name__ == '__main__':
+    pass

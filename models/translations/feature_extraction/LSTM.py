@@ -48,8 +48,7 @@ class LSTM(nn.Module):
         self.lstm = nn.LSTM(input_size=embedding_size,
                             hidden_size=dimension,
                             num_layers=1,
-                            batch_first=True,
-                            dropout=0.5)
+                            batch_first=True)
 
         self.drop = nn.Dropout(p=0.5)
 
@@ -57,7 +56,7 @@ class LSTM(nn.Module):
         embeds = self.embedding(paragraph)
         lstm_out, _ = self.lstm(embeds)
         lstm_out = self.drop(lstm_out)
-        return lstm_out
+        return torch.amax(lstm_out, dim=1)
 
 
 if __name__ == '__main__':
