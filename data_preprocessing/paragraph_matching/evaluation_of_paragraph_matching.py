@@ -1,12 +1,16 @@
-from paragraph_embedding import similarity_multiset_comparison
-from data_analysis import get_bible_alternative_translations
+import random
+from typing import Tuple
+
 import numpy as np
 from tqdm.auto import tqdm
+
+from data.bible.BibleDataSource import BibleDataSource, BibleTranslation
+from paragraph_embedding import similarity_multiset_comparison
 from plotting import similarities_plot
 
 
-def similarity_metric_evaluation_based_on_bible(similarity_metric, metric_name, text_length='short',
-                                                number_of_joined_verses=5):
+def similarity_metric_evaluation_based_on_bible(similarity_metric, metric_name: str,
+                                                chosen_translations: Tuple[int, int] = None):
     """
         Bible is a good benchmark for paragraph-matching algorithms as it is perfectly aligned
         This method uses it to check visually the performance of similarity metrics
@@ -15,49 +19,34 @@ def similarity_metric_evaluation_based_on_bible(similarity_metric, metric_name, 
 
         :param function similarity_metric: function that takes two texts (paragraphs) and returns its similarity score
         :param string metric_name: Name of metric used in plot title
-        :param bool text_length: method provieds two testing options:
-                'short' - evaluation performed on a single chapter; paragraphs are single verses
-                'long' - evaluation performed on a single 'Holy Bible' book; paragraphs are few joined verses
-        :param int number_of_joined_verses: describes how many consecutive verses are treated as single paragraph
+        :param chosen_translations: Specify which Bible translations should be used for evaluation. If None,
+            two random translations will be chosen.
     """
 
-    if text_length == 'short':
-        translations = get_bible_alternative_translations(limit=2, chapter='03')
-        list_of_paragraphs_1 = []
-        list_of_paragraphs_2 = []
-        for i in sorted(translations.keys()):
-            if len(translations[i]) == 2:
-                list_of_paragraphs_1.append(translations[i][0])
-                list_of_paragraphs_2.append(translations[i][1])
-            elif len(translations[i]) == 1:
-                list_of_paragraphs_1.append(translations[i][0])
-    elif text_length == 'long':
-        list_of_paragraphs_1 = []
-        list_of_paragraphs_2 = []
-        for chapter in range(1, 21):
-            translations = get_bible_alternative_translations(limit=2, chapter=str(chapter).zfill(2))
-            temp_1 = []
-            temp_2 = []
-            for i in sorted(translations.keys()):
-                if len(translations[i]) == 2:
-                    temp_1.append(translations[i][0])
-                    temp_2.append(translations[i][1])
-                if i % number_of_joined_verses == 0:
-                    list_of_paragraphs_1.append(' '.join(temp_1))
-                    list_of_paragraphs_2.append(' '.join(temp_2))
-                    temp_1 = []
-                    temp_2 = []
-            if i % number_of_joined_verses != 0:
-                list_of_paragraphs_1.append(' '.join(temp_1))
-                list_of_paragraphs_2.append(' '.join(temp_2))
+    translation_1: BibleTranslation
+    translation_2: BibleTranslation
 
-    matching = np.zeros((len(list_of_paragraphs_1), len(list_of_paragraphs_2))).astype(np.float32)
-    for y, paragraph_1 in enumerate(tqdm(list_of_paragraphs_1)):
-        for x, paragraph_2 in enumerate(list_of_paragraphs_2):
+    translation_1, translation_2 = [BibleDataSource().get_translation(i) for i in (
+        chosen_translations if chosen_translations is not None else random.sample(
+            range(BibleDataSource().no_translations), 2))]
+
+    paragraphs_of_translation_1, paragraphs_of_translation_2 = [], []
+    for paragraph_id in range(translation_1.no_paragraphs):
+        try:
+            new_paragraph_translation_1 = translation_1.get_paragraph(paragraph_id)
+            new_paragraph_translation_2 = translation_2.get_paragraph(paragraph_id)
+            paragraphs_of_translation_1.append(new_paragraph_translation_1)
+            paragraphs_of_translation_2.append(new_paragraph_translation_2)
+        except IndexError:
+            pass
+
+    matching = np.zeros((len(paragraphs_of_translation_1), len(paragraphs_of_translation_2))).astype(np.float32)
+    for y, paragraph_1 in enumerate(tqdm(paragraphs_of_translation_1)):
+        for x, paragraph_2 in enumerate(paragraphs_of_translation_2):
             matching[y, x] = similarity_metric(paragraph_1, paragraph_2)
 
     similarities_plot(matching, metric_name)
 
 
 if __name__ == '__main__':
-    similarity_metric_evaluation_based_on_bible(similarity_multiset_comparison, 'Multiset comparison', 'long')
+    similarity_metric_evaluation_based_on_bible(similarity_multiset_comparison, 'Multiset comparison')
