@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def similarities_plot(matching,metric_name):
+
+def similarities_plot(matching, metric_name):
     results = []
     for y, row in enumerate(matching):
         if np.min(row) != np.max(row):
