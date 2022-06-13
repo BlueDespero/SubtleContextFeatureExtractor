@@ -1,11 +1,12 @@
 import logging
 import sys
-from collections import defaultdict as dd
+from collections import Counter
 
 import gensim.downloader
 import nltk
 import numpy as np
 from gensim.corpora.wikicorpus import tokenize
+from multiset import Multiset
 from nltk.corpus import stopwords
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -56,28 +57,14 @@ def similarity_multiset_comparison(paragraph_1, paragraph_2):
 
     p_1 = paragraph_preprocessing(paragraph_1)
     p_2 = paragraph_preprocessing(paragraph_2)
-    d_1 = dd(int)
-    d_2 = dd(int)
 
-    for element in p_1:
-        d_1[element] += 1
-    for element in p_2:
-        d_2[element] += 1
-    union = 0
-    visited = set()
-    for key in d_1:
-        if key not in visited:
-            visited.add(key)
-            union += max(d_1[key], d_2[key])
+    m_1 = Multiset(p_1)
+    m_2 = Multiset(p_2)
 
-    for key in d_2:
-        if key not in visited:
-            visited.add(key)
-            union += max(d_1[key], d_2[key])
+    union = Multiset.union(m_1, m_2)
+    intersection = Multiset.intersection(m_1, m_2)
 
-    intersection = len([value for value in p_1 if value in p_2])
-
-    if union == 0:
+    if len(union) == 0:
         return 0.0
     else:
-        return intersection / union
+        return len(intersection) / len(union)
