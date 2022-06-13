@@ -10,6 +10,9 @@ from definitions import ROOT_DIR
 from paragraph_embedding import Word2vec_matching, similarity_multiset_comparison
 from plotting import similarities_plot
 
+LOOK_BACK_AMOUNT = 20
+LOOK_AHEAD_AMOUNT = 40
+
 
 def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_mode=True, plot_results=False,
                               pickle_result=False):
@@ -25,12 +28,16 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
     similarity = similarity_multiset_comparison if fast_mode else Word2vec_matching().similarity_combined
     matching_matrix = np.zeros((len(list_of_paragraphs_1), len(list_of_paragraphs_2))).astype(np.float32)
 
-    moving_average = [0 for _ in range(20)]
+    moving_average = [0] * 20
     for y, paragraph_1 in enumerate(tqdm(list_of_paragraphs_1)):
-        center = np.median(moving_average)
-        for x, paragraph_2 in enumerate(list_of_paragraphs_2):
-            if center - 20 < x < center + 40:
-                matching_matrix[y, x] = similarity(paragraph_1, paragraph_2) + 0.3
+        center = int(np.median(moving_average))
+
+        for i, paragraph_2 in enumerate(list_of_paragraphs_2[
+                                        max(0, center - LOOK_BACK_AMOUNT):
+                                        min(center + LOOK_AHEAD_AMOUNT, len(list_of_paragraphs_2) - 1)]):
+            x = i + max(0, center - LOOK_BACK_AMOUNT)
+            matching_matrix[y, x] = similarity(paragraph_1, paragraph_2) + 0.3
+
         moving_average.append(np.argmax(matching_matrix[y]))
         moving_average = moving_average[1:]
 
