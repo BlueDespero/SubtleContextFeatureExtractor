@@ -1,6 +1,9 @@
+import torch
 import torch.nn as nn
+from torch.nn.functional import nll_loss
 from models.translations.classification.MLP import MLP
 from models.translations.feature_extraction.LSTM import LSTM
+import torch.optim as optim
 
 
 class MyEnsemble(nn.Module):
@@ -13,6 +16,19 @@ class MyEnsemble(nn.Module):
         paragraph_embeddings = self.Feature_extractor(list_of_paragraphs)
         predictions = self.Classifier(paragraph_embeddings)
         return predictions
+
+    @staticmethod
+    def loss(predictions, targets):
+        return nll_loss(predictions, targets)
+
+    def train(self, list_of_batches, targets):
+        optimizer = optim.Adam(self.parameters(), lr=0.05)
+        for batch, target in zip(list_of_batches, targets):
+            optimizer.zero_grad()
+            predictions = model(batch)
+            loss = self.loss(predictions, target)
+            loss.backward()
+            optimizer.step()
 
 
 if __name__ == '__main__':
@@ -28,11 +44,9 @@ if __name__ == '__main__':
     1 am putting in your charge. He is entering the fifth form. If his 
     work and his conduct warrant it, he will be promoted to the upper 
     forms, as befits his age.”"""]
+    targets = [torch.tensor([0, 1, 3])]
 
     feature_extractor = LSTM()
     classifier = MLP(4)
     model = MyEnsemble(feature_extractor, classifier)
-
-    predictions = model(paragraphs)
-    print(predictions)
-    print(predictions.shape)
+    model.train([paragraphs], targets)
