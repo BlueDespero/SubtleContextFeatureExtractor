@@ -4,6 +4,7 @@ import gensim.downloader
 from nltk.corpus import stopwords
 from gensim.corpora.wikicorpus import tokenize
 
+
 def embedding_single(w2v, paragraph):
     list_of_tokens = tokenize(paragraph)
     embeddings = []
@@ -25,24 +26,53 @@ def embedding(w2v, list_of_paragraphs, embedding_size):
     list_of_paragraph_embeddings_padded = [torch.vstack(pad(expected_length, paragraph_embeddings)) for
                                            paragraph_embeddings in list_of_paragraph_embeddings]
     return torch.stack(list_of_paragraph_embeddings_padded)
+
+
 class LSTM(nn.Module):
-    def __init__(self,dimension=128):
+    def __init__(self, dimension=128, gensim_model='glove-wiki-gigaword-50'):
+        """
+            :param int dimension: Dimension of a output vector.
+            :param str gensim_model: Name of pretrained gensim model, suggested:
+                - 'glove-wiki-gigaword-50'
+                - 'glove-wiki-gigaword-200'
+                - 'word2vec-google-news-300'
+        """
         super(LSTM, self).__init__()
 
-        w2v = gensim.downloader.load('glove-wiki-gigaword-200')
-        # w2v = gensim.downloader.load('word2vec-google-news-300')
+        w2v = gensim.downloader.load(gensim_model)
         embedding_size = w2v.vector_size
 
-        self.embedding = lambda list_of_paragraphs: embedding(w2v,list_of_paragraphs,embedding_size)
+        self.embedding = lambda list_of_paragraphs: embedding(w2v, list_of_paragraphs, embedding_size)
 
         self.dimension = dimension
-        self.lstm = nn.LSTM(input_size=300,
+        self.lstm = nn.LSTM(input_size=embedding_size,
                             hidden_size=dimension,
                             num_layers=1,
                             batch_first=True,
                             dropout=0.5)
 
+        self.drop = nn.Dropout(p=0.5)
 
     def forward(self, paragraph: str):
-        x = self.fc1(paragraph)
-        return x
+        embeds = self.embedding(paragraph)
+        lstm_out, _ = self.lstm(embeds)
+        lstm_out = self.drop(lstm_out)
+        return lstm_out
+
+
+if __name__ == '__main__':
+    paragraphs = ["""
+    We were in study hall when the
+    Headmaster entered, followed by a “new boy” 
+    dressed in ordinary clothes and by a classmate who was 
+    carrying a large desk. Those who were asleep woke up, and every¬ 
+    one stood up as if taken imawares while at work. 
+    """, """The Headmaster made us a sign to be seated; then, turning 
+    toward the master in charge of study hall: 
+    """, """“Monsieur Roger,” he said in a low tone, “here is a student whom 
+    1 am putting in your charge. He is entering the fifth form. If his 
+    work and his conduct warrant it, he will be promoted to the upper 
+    forms, as befits his age.”"""]
+
+    lstm = LSTM()
+    print(repr(lstm(paragraphs)))
