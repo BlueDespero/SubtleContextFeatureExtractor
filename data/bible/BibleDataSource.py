@@ -3,8 +3,10 @@ import random
 from typing import TextIO, Tuple
 
 from data.utils.DataSourceInterface import Translation, DataSource
+from definitions import ROOT_DIR
 
 BIBLE_LINES_PER_PARAGRAPH = 6
+TRANSLATIONS_PATH = os.path.join(ROOT_DIR, "data/bible/translations")
 
 
 def get_book_and_chapter(data_stream: TextIO) -> Tuple[str, int]:
@@ -55,13 +57,13 @@ def initialize_paragraph_mapping() -> Tuple[dict, dict]:
     mapping = {}
     counter = 0
 
-    for translation_dict in os.listdir("translations"):
-        for file in os.listdir(os.path.join("translations", translation_dict)):
+    for translation_dict in os.listdir(TRANSLATIONS_PATH):
+        for file in os.listdir(os.path.join(TRANSLATIONS_PATH, translation_dict)):
 
             if file.endswith("000_read.txt") or not file.startswith("eng"):
                 continue
 
-            with open(os.path.join("translations", translation_dict, file), 'r',
+            with open(os.path.join(TRANSLATIONS_PATH, translation_dict, file), 'r',
                       encoding="utf-8") as translation_chapter_text:
 
                 book, chapter = get_book_and_chapter(translation_chapter_text)
@@ -172,9 +174,10 @@ class BibleDataSource(DataSource):
 
     :ivar no_translations: Number of available translations. Translation max index of the translation is one less than this.
     """
+
     def __init__(self):
         super().__init__()
-        self._all_translations_list = os.listdir('translations')
+        self._all_translations_list = os.listdir(TRANSLATIONS_PATH)
         self.no_translations = len(self._all_translations_list)
 
     def get_translation(self, translation_id: int) -> BibleTranslation:
@@ -194,7 +197,7 @@ class BibleDataSource(DataSource):
     def _find_translation(self, translation_id: int):
         for translation_name in self._all_translations_list:
             if translation_id == int(translation_name.split("-")[0]):
-                return os.path.join("translations", translation_name)
+                return os.path.join(TRANSLATIONS_PATH, translation_name)
 
 
 if __name__ == "__main__":
