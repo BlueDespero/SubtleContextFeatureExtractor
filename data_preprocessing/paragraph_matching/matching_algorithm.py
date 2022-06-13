@@ -1,9 +1,13 @@
-from paragraph_embedding import Word2vec_matching, similarity_multiset_comparison
-from os import listdir
-from tqdm.auto import tqdm
+import os.path
 import pickle
 from datetime import datetime
+from os import listdir
+
 import numpy as np
+from tqdm.auto import tqdm
+
+from definitions import ROOT_DIR
+from paragraph_embedding import Word2vec_matching, similarity_multiset_comparison
 from plotting import similarities_plot
 
 
@@ -18,22 +22,20 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         :return: List of a tuples of a corresponding paragraphs
         :rtype: list
     """
-    if not fast_mode:
-        w2v = Word2vec_matching()
-    similarity = similarity_multiset_comparison if fast_mode else w2v.similarity_combined
-    matching = np.zeros((len(list_of_paragraphs_1), len(list_of_paragraphs_2))).astype(np.float32)
+    similarity = similarity_multiset_comparison if fast_mode else Word2vec_matching().similarity_combined
+    matching_matrix = np.zeros((len(list_of_paragraphs_1), len(list_of_paragraphs_2))).astype(np.float32)
 
     moving_average = [0 for _ in range(20)]
     for y, paragraph_1 in enumerate(tqdm(list_of_paragraphs_1)):
         center = np.median(moving_average)
         for x, paragraph_2 in enumerate(list_of_paragraphs_2):
             if center - 20 < x < center + 40:
-                matching[y, x] = similarity(paragraph_1, paragraph_2) + 0.3
-        moving_average.append(np.argmax(matching[y]))
+                matching_matrix[y, x] = similarity(paragraph_1, paragraph_2) + 0.3
+        moving_average.append(np.argmax(matching_matrix[y]))
         moving_average = moving_average[1:]
 
     results = []
-    for y, row in enumerate(matching):
+    for y, row in enumerate(matching_matrix):
         if np.min(row) != np.max(row):
             results.append((y, np.argmax(row)))
 
@@ -42,7 +44,7 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         pickle.dump(matches, open(datetime.now().strftime("%d_%m_%Y__%H_%M_%S.pickle"), 'wb'))
 
     if plot_results:
-        similarities_plot(matching, 'Multiset comparison')
+        similarities_plot(matching_matrix, 'Multiset comparison')
     return matches
 
 
@@ -54,9 +56,7 @@ def matching(translations, fast_mode=True, pickle_result=False):
         :return: List of a tuples of a corresponding paragraphs
         :rtype: list
     """
-    if not fast_mode:
-        w2v = Word2vec_matching()
-    similarity = similarity_multiset_comparison if fast_mode else w2v.similarity_combined
+    similarity = similarity_multiset_comparison if fast_mode else Word2vec_matching().similarity_combined
     translations.sort(key=len, reverse=True)
     central_translation, translations = translations[0], translations[1:]
     matching = {central_translation_paragraph_id: [] for central_translation_paragraph_id in
@@ -97,9 +97,9 @@ if __name__ == '__main__':
         return [line for line in file.read().split('\n\n') if len(line.split()) > 3]
 
 
-    path = r'../../data/madame_bovary/'
-    file_names = [f for f in listdir(path)]
-    translations = [get_translation(open(path + file_name, 'r', encoding='UTF-8'))[:20] for file_name in file_names]
+    path = os.path.join(ROOT_DIR, "data/madame_bovary")
+    translations = [get_translation(open(os.path.join(path, file_name), 'r', encoding='UTF-8'))[:20] for file_name in
+                    listdir(path)]
 
     matching_two_translations(translations[0], translations[1], fast_mode=True, plot_results=True,
                               pickle_result=False)
