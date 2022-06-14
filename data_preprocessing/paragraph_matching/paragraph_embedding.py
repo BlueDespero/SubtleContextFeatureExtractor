@@ -1,6 +1,5 @@
 import logging
 import sys
-from collections import Counter
 
 import gensim.downloader
 import nltk
@@ -44,13 +43,19 @@ class Word2vec_matching:
 
     def similarity_combined(self, paragraph_1, paragraph_2):
         value_1 = self.similarity_simple(paragraph_1, paragraph_2)
-        value_2 = similarity_multiset_comparison(paragraph_1, paragraph_2)
+        value_2 = jaccard_similarity(paragraph_1, paragraph_2)
         return value_1 * value_2
 
 
-def similarity_multiset_comparison(paragraph_1, paragraph_2):
-    # In this function paragraphs are treated as multi-sets of words (except stopwords)
-    # Similarity score is size of multi-sets intersection divided by multi-sets sum
+def jaccard_similarity(paragraph_1: str, paragraph_2: str) -> float:
+    """
+    Calculate Jaccard similarity coefficient of two paragraphs.
+    English stopwords and very short words are ommited.
+    :param paragraph_1: First string paragraph for comparison.
+    :param paragraph_2: Second string paragraph for comparison.
+    :return: similarity coefficient of two paragraphs
+    """
+
     def paragraph_preprocessing(paragraph):
         list_of_tokens = tokenize(paragraph)
         return [word for word in list_of_tokens if len(word) > 3 and word not in stopwords.words('english')]

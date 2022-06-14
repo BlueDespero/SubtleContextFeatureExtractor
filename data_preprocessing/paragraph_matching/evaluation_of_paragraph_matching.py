@@ -5,7 +5,7 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from data.bible.BibleDataSource import BibleDataSource, BibleTranslation
-from paragraph_embedding import similarity_multiset_comparison
+from paragraph_embedding import jaccard_similarity
 from plotting import similarities_plot
 
 
@@ -49,4 +49,4 @@ def similarity_metric_evaluation_based_on_bible(similarity_metric, metric_name: 
 
 
 if __name__ == '__main__':
-    similarity_metric_evaluation_based_on_bible(similarity_multiset_comparison, 'Multiset comparison')
+    similarity_metric_evaluation_based_on_bible(jaccard_similarity, 'Multiset comparison')

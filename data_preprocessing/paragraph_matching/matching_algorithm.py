@@ -7,7 +7,7 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from definitions import ROOT_DIR
-from paragraph_embedding import Word2vec_matching, similarity_multiset_comparison
+from paragraph_embedding import Word2vec_matching, jaccard_similarity
 from plotting import similarities_plot
 
 LOOK_BACK_AMOUNT = 20
@@ -25,7 +25,7 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         :return: List of a tuples of a corresponding paragraphs
         :rtype: list
     """
-    similarity = similarity_multiset_comparison if fast_mode else Word2vec_matching().similarity_combined
+    similarity = jaccard_similarity if fast_mode else Word2vec_matching().similarity_combined
     matching_matrix = np.zeros((len(list_of_paragraphs_1), len(list_of_paragraphs_2))).astype(np.float32)
 
     moving_average = [0] * 20
@@ -63,7 +63,7 @@ def matching(translations, fast_mode=True, pickle_result=False):
         :return: List of a tuples of a corresponding paragraphs
         :rtype: list
     """
-    similarity = similarity_multiset_comparison if fast_mode else Word2vec_matching().similarity_combined
+    similarity = jaccard_similarity if fast_mode else Word2vec_matching().similarity_combined
     translations.sort(key=len, reverse=True)
     central_translation, translations = translations[0], translations[1:]
     matching = {central_translation_paragraph_id: [] for central_translation_paragraph_id in
