@@ -51,7 +51,7 @@ def load_precomputed_files() -> Tuple[dict, set]:
     try:
         with open(os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"),
                   'rb') as translations_already_mapped, open(
-            os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"), 'rb') as precomputed_mapping:
+            os.path.join(ROOT_DIR, "data/bible/utils/precomputed_mapping.pickle"), 'rb') as precomputed_mapping:
             mapping = pickle.load(precomputed_mapping)
             handled_files = pickle.load(translations_already_mapped)
             return mapping, handled_files
@@ -62,7 +62,7 @@ def load_precomputed_files() -> Tuple[dict, set]:
 def save_computed_files(mapping: dict, handled_files: set):
     with open(os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"),
               'wb') as translations_already_mapped, open(
-        os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"), 'wb') as precomputed_mapping:
+        os.path.join(ROOT_DIR, "data/bible/utils/precomputed_mapping.pickle"), 'wb') as precomputed_mapping:
         pickle.dump(handled_files, translations_already_mapped)
         pickle.dump(mapping, precomputed_mapping)
 

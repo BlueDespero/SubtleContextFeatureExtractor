@@ -4,7 +4,7 @@ import nltk
 import torch
 from transformers import BertTokenizer, BertModel
 
-from data.utils.DataSourceInterface import Metadata, _prepare_nltk
+from data.utils.DataSourceInterface import Metadata, prepare_nltk
 
 
 class Embedding:
@@ -61,7 +61,7 @@ class IdentityEmbedding(Embedding):
         super().__init__(target_length, device, metadata)
         if self.metadata is None:
             raise AttributeError("For IdentityEmbedding ('none' embedding option) metadata needs to be specified.")
-        _prepare_nltk()
+        prepare_nltk()
 
     def encode(self, sentence: str):
         list_of_tokens = nltk.word_tokenize(sentence)

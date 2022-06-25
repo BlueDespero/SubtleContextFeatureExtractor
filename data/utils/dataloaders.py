@@ -45,8 +45,8 @@ class Dataloader:
         self._data_source = get_data_source_object_from_name(self.book_name)
         self._translations = self._load_translations()
         self._len = self._measure_length()
-        self._embedder = self._get_embedder()
         self._metadata = self._data_source.get_metadata()
+        self._embedder = self._get_embedder()
         self._paragraph_order = self._get_order()
 
     def __len__(self) -> int:
@@ -56,7 +56,7 @@ class Dataloader:
         batch = []
         initial_id = item * self.batch_size
 
-        for paragraph_id in self._paragraph_order[initial_id: initial_id+self.batch_size]:
+        for paragraph_id in self._paragraph_order[initial_id: initial_id + self.batch_size]:
             paragraphs, labels = self._get_paragraphs_from_translations(paragraph_id)
             paragraphs_embeddings = self._embedder.encode_batch(paragraphs)
             paragraphs_embeddings = [[embed, label] for embed, label in zip(paragraphs_embeddings, labels)]
@@ -129,3 +129,9 @@ def create_data_loaders(book_name: str,
             device
         )
     }
+
+
+if __name__ == "__main__":
+    test_loaders = create_data_loaders('bible', [1, 2, 3], [4, 5], [6, 7], batch_size=124, embedding='none',
+                                       shuffle=False)
+    print(test_loaders)
