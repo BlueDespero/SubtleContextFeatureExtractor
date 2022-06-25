@@ -6,6 +6,7 @@ from data.les_miserables.LesMiserablesDataSource import LesMiserablesDataSource
 from data.madame_bovary.MadameBovaryDataSource import MadameBovaryDataSource
 from data.quran.QuranDataSource import QuranDataSource
 from data.utils.DataSourceInterface import DataSource, Translation
+from data.utils.embeddings import NAME_TO_EMBEDDING, Embedding
 
 DATASOURCE_MAPPING = {
     'quran': QuranDataSource,
@@ -30,23 +31,29 @@ class Dataloader:
                  book_name: str,
                  book_translations: List[int],
                  batch_size: int,
+                 embedding='bert',
                  shuffle=True,
                  device='cpu') -> None:
         self.book_name = book_name
         self.book_translations = book_translations
         self.batch_size = batch_size
+        self.embedding = embedding
         self.shuffle = shuffle
         self.device = device
 
         self._data_source = get_data_source_object_from_name(self.book_name)
         self._translations = self._load_translations()
         self._len = self._measure_length()
+        self._embedder = self._get_embedder()
 
     def __len__(self) -> int:
         return self._len
 
     def __getitem__(self, item):
-        pass
+
+        for _ in range(self.batch_size):
+            paragraphs = self._get_paragraphs_from_translations(paragraph_id)
+            paragraphs_embeddings = self._embedder
 
     def _load_translations(self) -> List[Translation]:
         prepared_translations = []
@@ -57,6 +64,9 @@ class Dataloader:
     def _measure_length(self) -> int:
         max_paragraphs = max([translation.no_paragraphs for translation in self._translations])
         return max_paragraphs / self.batch_size
+
+    def _get_embedder(self) -> Embedding:
+        return NAME_TO_EMBEDDING[self.embedding.lower()]()
 
 
 def create_data_loaders(book_name, translations_count):
