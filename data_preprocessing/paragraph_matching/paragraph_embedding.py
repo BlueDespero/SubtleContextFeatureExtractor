@@ -17,8 +17,7 @@ class Word2vec_matching:
         # calculating similarities
         self.model = gensim.downloader.load('word2vec-google-news-300')
         try:
-            if "the" in stopwords.words('english'):
-                logging.info("NLTK - English stopwords downloaded.")
+            nltk.data.find('tokenizers/punkt')
         except LookupError:
             logging.error("NLTK - English stopwords missing. Trying to download...")
             nltk.download('stopwords')

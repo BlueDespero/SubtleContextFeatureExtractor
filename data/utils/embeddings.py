@@ -56,6 +56,8 @@ class IdentityEmbedding(Embedding):
     def encode(self, sentence: str):
         raise NotImplemented
 
+    def encode_batch(self, list_of_sentences: List[str]):
+        return super().encode_batch(list_of_sentences)
 
 NAME_TO_EMBEDDING = {
     'bert': BertEmbedding,
