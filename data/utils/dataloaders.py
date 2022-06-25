@@ -45,6 +45,7 @@ class Dataloader:
         self._translations = self._load_translations()
         self._len = self._measure_length()
         self._embedder = self._get_embedder()
+        self._paragraph_order = self._get_order()
 
     def __len__(self) -> int:
         return self._len
@@ -84,6 +85,9 @@ class Dataloader:
             paragraphs.append(paragraph)
             labels.append(t.translation_id)
         return paragraphs, labels
+
+    def _get_order(self):
+        metadata = self._data_source.get_metadata()
 
 
 def create_data_loaders(book_name: str,

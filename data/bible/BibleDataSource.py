@@ -3,7 +3,7 @@ import pickle
 import random
 from typing import TextIO, Tuple
 
-from data.utils.DataSourceInterface import Translation, DataSource
+from data.utils.DataSourceInterface import Translation, DataSource, Metadata
 from definitions import ROOT_DIR
 
 BIBLE_LINES_PER_PARAGRAPH = 6
@@ -196,6 +196,13 @@ class BibleTranslation(Translation):
         return "".join(self.lines[start:finish])
 
 
+class BibleMetadata(Metadata):
+
+    def __init__(self, data_source):
+        path_to_save_file = os.path.join(ROOT_DIR, 'data', 'bible', 'utils', 'metadata.pickle')
+        super().__init__(data_source, path_to_save_file)
+
+
 class BibleDataSource(DataSource):
     """
     Handler for the Bible translations in the database.
@@ -227,6 +234,9 @@ class BibleDataSource(DataSource):
         for translation_name in self._all_translations_list:
             if translation_id == int(translation_name.split("-")[0]):
                 return os.path.join(TRANSLATIONS_PATH, translation_name)
+
+    def get_metadata(self) -> BibleMetadata:
+        return BibleMetadata(data_source=self)
 
 
 if __name__ == "__main__":

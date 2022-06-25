@@ -2,7 +2,8 @@ import ast
 import os
 import random
 
-from data.utils.DataSourceInterface import Translation, DataSource
+from data.utils.DataSourceInterface import Translation, DataSource, Metadata
+from definitions import ROOT_DIR
 
 
 class QuranTranslation(Translation):
@@ -26,6 +27,13 @@ class QuranTranslation(Translation):
         self.no_paragraphs = self.no_lines
 
 
+class QuranMetadata(Metadata):
+
+    def __init__(self, data_source):
+        path_to_save_file = os.path.join(ROOT_DIR, 'data', 'quran', 'utils', 'metadata.pickle')
+        super().__init__(data_source, path_to_save_file)
+
+
 class QuranDataSource(DataSource):
     def __init__(self):
         super().__init__()
@@ -43,6 +51,9 @@ class QuranDataSource(DataSource):
         for translation_name in self.all_translations_list:
             if translation_id == int(translation_name.split("-")[0]):
                 return os.path.join("translations", translation_name)
+
+    def get_metadata(self) -> QuranMetadata:
+        return QuranMetadata(data_source=self)
 
 
 if __name__ == "__main__":
