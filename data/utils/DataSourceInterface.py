@@ -1,7 +1,8 @@
 class Translation:
-    def __init__(self, path):
+    def __init__(self, path, translation_id):
         self.no_lines = None
         self.no_paragraphs = None
+        self.translation_id = translation_id
 
     def get_line(self, line_id):
         raise NotImplemented

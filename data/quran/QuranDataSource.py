@@ -15,8 +15,8 @@ class QuranTranslation(Translation):
     def get_paragraph(self, paragraph_id):
         return self.get_line(paragraph_id)
 
-    def __init__(self, path):
-        super().__init__(path)
+    def __init__(self, path, translation_id):
+        super().__init__(path, translation_id)
         with open(path, 'r', encoding="utf-8") as translation_text:
             all_lines = translation_text.readlines()
             metadata_separator_line = all_lines.index("{\n")
@@ -35,7 +35,7 @@ class QuranDataSource(DataSource):
     def get_translation(self, translation_id: int) -> QuranTranslation:
         if 0 <= translation_id < self.no_translations:
             chosen_translation_path = self._find_translation(translation_id)
-            return QuranTranslation(chosen_translation_path)
+            return QuranTranslation(chosen_translation_path, translation_id)
         else:
             raise IndexError
 

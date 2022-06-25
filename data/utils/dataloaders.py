@@ -50,10 +50,15 @@ class Dataloader:
         return self._len
 
     def __getitem__(self, item):
+        batch = []
+        initial_id = item * self.batch_size
 
-        for _ in range(self.batch_size):
-            paragraphs = self._get_paragraphs_from_translations(paragraph_id)
-            paragraphs_embeddings = self._embedder
+        for i in range(self.batch_size):
+            paragraphs, labels = self._get_paragraphs_from_translations(initial_id + i)
+            paragraphs_embeddings = self._embedder.encode_batch(paragraphs)
+            paragraphs_embeddings = [[embed, label] for embed, label in zip(paragraphs_embeddings, labels)]
+            batch.append(paragraphs_embeddings)
+        return batch
 
     def _load_translations(self) -> List[Translation]:
         prepared_translations = []
@@ -67,6 +72,14 @@ class Dataloader:
 
     def _get_embedder(self) -> Embedding:
         return NAME_TO_EMBEDDING[self.embedding.lower()]()
+
+    def _get_paragraphs_from_translations(self, paragraph_id):
+        paragraphs = []
+        labels = []
+        for t in self._translations:
+            paragraphs.append(t.get_paragraph(paragraph_id))
+            labels.append(t.translation_id)
+        return paragraphs, labels
 
 
 def create_data_loaders(book_name, translations_count):

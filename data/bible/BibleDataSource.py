@@ -124,12 +124,12 @@ class BibleTranslation(Translation):
     """
     paragraph_mapping, inverse_paragraph_mapping = initialize_paragraph_mapping()
 
-    def __init__(self, path):
+    def __init__(self, path, translation_id):
         """
         :param path: Path to the directory containing the translation.
         :type path: str
         """
-        super().__init__(path)
+        super().__init__(path, translation_id)
         self.lines = []
         self.lines_of_paragraph = {}
 
@@ -219,7 +219,7 @@ class BibleDataSource(DataSource):
         """
         if 0 <= translation_id < self.no_translations:
             chosen_translation_path = self._find_translation(translation_id)
-            return BibleTranslation(chosen_translation_path)
+            return BibleTranslation(chosen_translation_path, translation_id)
         else:
             raise IndexError
 
