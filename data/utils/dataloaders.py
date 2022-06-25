@@ -1,10 +1,11 @@
+import random
 from typing import List
 
-from data.The_Count_of_Monte_Cristo.CountDataSource import CountDataSource
 from data.bible.BibleDataSource import BibleDataSource
 from data.les_miserables.LesMiserablesDataSource import LesMiserablesDataSource
 from data.madame_bovary.MadameBovaryDataSource import MadameBovaryDataSource
 from data.quran.QuranDataSource import QuranDataSource
+from data.the_count_of_monte_cristo.CountDataSource import CountDataSource
 from data.utils.DataSourceInterface import DataSource, Translation
 from data.utils.embeddings import NAME_TO_EMBEDDING, Embedding
 
@@ -32,7 +33,7 @@ class Dataloader:
                  book_translations: List[int],
                  batch_size: int,
                  embedding: str = 'bert',
-                 shuffle: bool = True,  # TODO
+                 shuffle: bool = True,
                  device: str = 'cpu') -> None:  # TODO move to target device
         self.book_name = book_name
         self.book_translations = book_translations
@@ -45,6 +46,7 @@ class Dataloader:
         self._translations = self._load_translations()
         self._len = self._measure_length()
         self._embedder = self._get_embedder()
+        self._metadata = self._data_source.get_metadata()
         self._paragraph_order = self._get_order()
 
     def __len__(self) -> int:
@@ -54,8 +56,8 @@ class Dataloader:
         batch = []
         initial_id = item * self.batch_size
 
-        for i in range(self.batch_size):
-            paragraphs, labels = self._get_paragraphs_from_translations(initial_id + i)
+        for paragraph_id in self._paragraph_order[initial_id: initial_id+self.batch_size]:
+            paragraphs, labels = self._get_paragraphs_from_translations(paragraph_id)
             paragraphs_embeddings = self._embedder.encode_batch(paragraphs)
             paragraphs_embeddings = [[embed, label] for embed, label in zip(paragraphs_embeddings, labels)]
             batch.append(paragraphs_embeddings)
@@ -87,7 +89,10 @@ class Dataloader:
         return paragraphs, labels
 
     def _get_order(self):
-        metadata = self._data_source.get_metadata()
+        order = list(range(self._metadata.max_number_of_paragraphs))
+        if self.shuffle:
+            random.shuffle(order)
+        return order
 
 
 def create_data_loaders(book_name: str,
