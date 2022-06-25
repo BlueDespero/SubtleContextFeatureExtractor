@@ -77,7 +77,11 @@ class Dataloader:
         paragraphs = []
         labels = []
         for t in self._translations:
-            paragraphs.append(t.get_paragraph(paragraph_id))
+            try:
+                paragraph = t.get_paragraph(paragraph_id)
+            except IndexError:
+                paragraph = "..."
+            paragraphs.append(paragraph)
             labels.append(t.translation_id)
         return paragraphs, labels
 
