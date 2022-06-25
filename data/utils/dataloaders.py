@@ -7,21 +7,22 @@ from data.madame_bovary.MadameBovaryDataSource import MadameBovaryDataSource
 from data.quran.QuranDataSource import QuranDataSource
 from data.utils.DataSourceInterface import DataSource, Translation
 
+DATASOURCE_MAPPING = {
+    'quran': QuranDataSource,
+    'bible': BibleDataSource,
+    'les miserables': LesMiserablesDataSource,
+    'madame bovary': MadameBovaryDataSource,
+    'the count of monte cristo': CountDataSource
+}
+
 
 def get_data_source_object_from_name(book_name: str) -> DataSource:
-    match book_name.lower():
-        case 'quran':
-            return QuranDataSource()
-        case 'bible':
-            return BibleDataSource()
-        case 'les miserables':
-            return LesMiserablesDataSource()
-        case 'madame bovary':
-            return MadameBovaryDataSource()
-        case 'the count of monte cristo':
-            return CountDataSource()
-        case _:
-            raise KeyError("{} - no such book in the database".format(book_name))
+    try:
+        datasource = DATASOURCE_MAPPING[book_name.lower()]
+        return datasource()
+    except KeyError:
+        raise KeyError("{name} - no such book in the database. "
+                       "Available picks: {list}".format(name=book_name, list=DATASOURCE_MAPPING.keys()))
 
 
 class Dataloader:
