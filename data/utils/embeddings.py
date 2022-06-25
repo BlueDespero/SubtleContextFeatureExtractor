@@ -1,11 +1,15 @@
 from typing import List
 
+import nltk
 import torch
 from transformers import BertTokenizer, BertModel
 
+from data.utils.DataSourceInterface import Metadata, _prepare_nltk
+
 
 class Embedding:
-    def __init__(self, target_length: int = None, device: str = None):
+    def __init__(self, target_length: int = None, device: str = 'cpu', metadata: Metadata = None):
+        self.metadata = metadata
         self.target_length = target_length
         self.device = device
 
@@ -47,17 +51,28 @@ class BertEmbedding(Embedding):
             input_ids = encoded["input_ids"]
 
             return [
-                BertEmbedding.model.encode(input_id)[2][0] for input_id in input_ids
+                BertEmbedding.model.encode(input_id)[2][0].to(self.device) for input_id in input_ids
             ]
 
 
 class IdentityEmbedding(Embedding):
 
+    def __init__(self, target_length: int = None, device: str = 'cpu', metadata: Metadata = None):
+        super().__init__(target_length, device, metadata)
+        if self.metadata is None:
+            raise AttributeError("For IdentityEmbedding ('none' embedding option) metadata needs to be specified.")
+        _prepare_nltk()
+
     def encode(self, sentence: str):
-        raise NotImplemented
+        list_of_tokens = nltk.word_tokenize(sentence)
+        embedding = [self.metadata.words_to_idx[word] for word in list_of_tokens]
+        embedding = embedding + [0] * (self.metadata.longest_paragraph_length - len(embedding))
+        embedding = torch.IntTensor(embedding, device=self.device)
+        return embedding
 
     def encode_batch(self, list_of_sentences: List[str]):
-        return super().encode_batch(list_of_sentences)
+        return [self.encode(sentence) for sentence in list_of_sentences]
+
 
 NAME_TO_EMBEDDING = {
     'bert': BertEmbedding,

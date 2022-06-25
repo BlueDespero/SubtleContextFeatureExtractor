@@ -34,7 +34,7 @@ class Dataloader:
                  batch_size: int,
                  embedding: str = 'bert',
                  shuffle: bool = True,
-                 device: str = 'cpu') -> None:  # TODO move to target device
+                 device: str = 'cpu') -> None:
         self.book_name = book_name
         self.book_translations = book_translations
         self.batch_size = batch_size
@@ -74,7 +74,7 @@ class Dataloader:
         return max_paragraphs / self.batch_size
 
     def _get_embedder(self) -> Embedding:
-        return NAME_TO_EMBEDDING[self.embedding.lower()]()
+        return NAME_TO_EMBEDDING[self.embedding.lower()](device=self.device, metadata=self._metadata)
 
     def _get_paragraphs_from_translations(self, paragraph_id):
         paragraphs = []
