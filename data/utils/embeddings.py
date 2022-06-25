@@ -5,6 +5,10 @@ from transformers import BertTokenizer, BertModel
 
 
 class Embedding:
+    def __init__(self, target_length: int = None, device: str = None):
+        self.target_length = target_length
+        self.device = device
+
     def encode(self, sentence: str):
         raise NotImplemented
 
