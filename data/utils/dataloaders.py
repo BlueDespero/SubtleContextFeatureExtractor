@@ -31,9 +31,9 @@ class Dataloader:
                  book_name: str,
                  book_translations: List[int],
                  batch_size: int,
-                 embedding='bert',
-                 shuffle=True,
-                 device='cpu') -> None:
+                 embedding: str = 'bert',
+                 shuffle: bool = True,  # TODO
+                 device: str = 'cpu') -> None:  # TODO move to target device
         self.book_name = book_name
         self.book_translations = book_translations
         self.batch_size = batch_size
@@ -86,5 +86,37 @@ class Dataloader:
         return paragraphs, labels
 
 
-def create_data_loaders(book_name, translations_count):
-    pass
+def create_data_loaders(book_name: str,
+                        training_translations: List[int],
+                        testing_translations: List[int],
+                        validation_translations: List[int],
+                        batch_size: int,
+                        embedding: str = 'bert',
+                        shuffle: bool = True,
+                        device: str = 'cpu'
+                        ):
+    return {'train': Dataloader(
+        book_name,
+        training_translations,
+        batch_size,
+        embedding,
+        shuffle,
+        device
+    ),
+        'validation': Dataloader(
+            book_name,
+            testing_translations,
+            batch_size,
+            embedding,
+            shuffle,
+            device
+        ),
+        'test': Dataloader(
+            book_name,
+            validation_translations,
+            batch_size,
+            embedding,
+            shuffle,
+            device
+        )
+    }
