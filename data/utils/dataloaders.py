@@ -5,7 +5,7 @@ from data.bible.BibleDataSource import BibleDataSource
 from data.les_miserables.LesMiserablesDataSource import LesMiserablesDataSource
 from data.madame_bovary.MadameBovaryDataSource import MadameBovaryDataSource
 from data.quran.QuranDataSource import QuranDataSource
-from data.utils.DataSourceInterface import DataSource
+from data.utils.DataSourceInterface import DataSource, Translation
 
 
 def get_data_source_object_from_name(book_name: str) -> DataSource:
@@ -38,12 +38,24 @@ class Dataloader:
         self.device = device
 
         self._data_source = get_data_source_object_from_name(self.book_name)
+        self._translations = self._load_translations()
+        self._len = self._measure_length()
 
     def __len__(self) -> int:
-        pass
+        return self._len
 
     def __getitem__(self, item):
         pass
+
+    def _load_translations(self) -> List[Translation]:
+        prepared_translations = []
+        for translation_id in self.book_translations:
+            prepared_translations.append(self._data_source.get_translation(translation_id))
+        return prepared_translations
+
+    def _measure_length(self) -> int:
+        max_paragraphs = max([translation.no_paragraphs for translation in self._translations])
+        return max_paragraphs / self.batch_size
 
 
 def create_data_loaders(book_name, translations_count):
