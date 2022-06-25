@@ -19,7 +19,7 @@ class Translation:
         raise NotImplemented
 
 
-def _prepate_nltk():
+def _prepare_nltk():
     try:
         nltk.data.find('tokenizers/punkt')
     except LookupError:
@@ -71,7 +71,7 @@ class Metadata:
         })
 
     def _get_metadata(self):
-        _prepate_nltk()
+        _prepare_nltk()
         self.words_to_idx = defaultdict(lambda: 0)
         self.words_to_idx.update({
             "<UNK>": 0,
