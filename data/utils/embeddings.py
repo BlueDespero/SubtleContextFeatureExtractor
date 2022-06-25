@@ -33,8 +33,18 @@ class BertEmbedding(Embedding):
             return pooled_output[0]
 
     def encode_batch(self, list_of_sentences: List[str]):
-        # TODO Tokenize sentences together
-        return [self.encode(sentence) for sentence in list_of_sentences]
+        encoded = BertEmbedding.tokenizer.batch_encode_plus(
+            list_of_sentences,
+            padding='longest',
+            return_tensors="pt",
+        )
+
+        with torch.no_grad():
+            input_ids = encoded["input_ids"]
+
+            return [
+                BertEmbedding.model.encode(input_id)[2][0] for input_id in input_ids
+            ]
 
 
 class IdentityEmbedding(Embedding):
@@ -54,11 +64,15 @@ if __name__ == "__main__":
     embedder = BertEmbedding()
 
     embedding1 = embedder.encode(
-        "In the very beginning, long, long ago, God made the earth below and the heavens above. At the time when God first started creating the world, "
-        "it was all watery. Water covered everything and that was all. There was no dry land yet, only water, and it was dark. It was dark just like a cave is dark inside at night. But the spirit of God was moving over the water."
+        "In the very beginning, long, long ago, God made the earth below and the heavens above. At the time when God "
+        "first started creating the world, "
+        "it was all watery. Water covered everything and that was all. There was no dry land yet, only water, "
+        "and it was dark. It was dark just like a cave is dark inside at night. But the spirit of God was moving over "
+        "the water. "
         "Then God spoke. “Let there be light,” he said. And then the light came out. "
         "God looked and saw that the light was good. Then he separated the light from the darkness. "
-        "He called the light “Day” and the darkness “Night.” Then night came. That was the first night. Then a new day dawned and it was morning. "
+        "He called the light “Day” and the darkness “Night.” Then night came. That was the first night. Then a new "
+        "day dawned and it was morning. "
     )
     embedding2 = embedder.encode_batch([sentence1, sentence2])
     embedding3 = embedder.encode_batch([sentence2, sentence1])
