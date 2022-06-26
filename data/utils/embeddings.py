@@ -25,20 +25,23 @@ class BertEmbedding(Embedding):
     tokenizer = BertTokenizer.from_pretrained(model_name)
     model = BertModel.from_pretrained(model_name)
 
+    def _encode(self, input_ids):
+        with torch.no_grad():
+            output = BertEmbedding.model(
+                input_ids
+            )
+            sequence_output, pooled_output = output[:2]
+            return pooled_output[0]
+
     def encode(self, sentence: str):
         encoded = BertEmbedding.tokenizer.batch_encode_plus(
             [sentence],
             padding='longest',
             return_tensors="pt",
         )
+        input_id = encoded["input_ids"]
 
-        with torch.no_grad():
-            input_ids = encoded["input_ids"]
-            output = BertEmbedding.model(
-                input_ids
-            )
-            sequence_output, pooled_output = output[:2]
-            return pooled_output[0]
+        return self._encode(input_id)
 
     def encode_batch(self, list_of_sentences: List[str]):
         encoded = BertEmbedding.tokenizer.batch_encode_plus(
@@ -47,12 +50,13 @@ class BertEmbedding(Embedding):
             return_tensors="pt",
         )
 
-        with torch.no_grad():
-            input_ids = encoded["input_ids"]
+        input_ids = encoded["input_ids"]
+        result = []
+        for input_id in input_ids:
+            encode_input = torch.reshape(input_id, (1, -1))
+            result.append(self._encode(encode_input))
 
-            return [
-                self.encode(input_id)[2][0].to(self.device) for input_id in input_ids
-            ]
+        return result
 
 
 class IdentityEmbedding(Embedding):
