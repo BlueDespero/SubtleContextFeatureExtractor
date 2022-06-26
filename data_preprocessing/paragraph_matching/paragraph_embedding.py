@@ -2,11 +2,12 @@ import logging
 import sys
 
 import gensim.downloader
-import nltk
 import numpy as np
 from gensim.corpora.wikicorpus import tokenize
 from multiset import Multiset
 from nltk.corpus import stopwords
+
+from data.utils.DataSourceInterface import prepare_nltk
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -16,12 +17,7 @@ class Word2vec_matching:
         # Initialization of gensim model might take few seconds, however it should be executed once before process of
         # calculating similarities
         self.model = gensim.downloader.load('word2vec-google-news-300')
-        try:
-            if "the" in stopwords.words('english'):
-                logging.info("NLTK - English stopwords downloaded.")
-        except LookupError:
-            logging.error("NLTK - English stopwords missing. Trying to download...")
-            nltk.download('stopwords')
+        prepare_nltk()
 
     def similarity_simple(self, paragraph_1, paragraph_2):
         # This function computes similarity as cosine of two paragraph embeddings

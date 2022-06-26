@@ -3,7 +3,7 @@ import pickle
 import random
 from typing import TextIO, Tuple
 
-from data.utils.DataSourceInterface import Translation, DataSource
+from data.utils.DataSourceInterface import Translation, DataSource, Metadata
 from definitions import ROOT_DIR
 
 BIBLE_LINES_PER_PARAGRAPH = 6
@@ -51,7 +51,7 @@ def load_precomputed_files() -> Tuple[dict, set]:
     try:
         with open(os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"),
                   'rb') as translations_already_mapped, open(
-            os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"), 'rb') as precomputed_mapping:
+            os.path.join(ROOT_DIR, "data/bible/utils/precomputed_mapping.pickle"), 'rb') as precomputed_mapping:
             mapping = pickle.load(precomputed_mapping)
             handled_files = pickle.load(translations_already_mapped)
             return mapping, handled_files
@@ -62,7 +62,7 @@ def load_precomputed_files() -> Tuple[dict, set]:
 def save_computed_files(mapping: dict, handled_files: set):
     with open(os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"),
               'wb') as translations_already_mapped, open(
-        os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"), 'wb') as precomputed_mapping:
+        os.path.join(ROOT_DIR, "data/bible/utils/precomputed_mapping.pickle"), 'wb') as precomputed_mapping:
         pickle.dump(handled_files, translations_already_mapped)
         pickle.dump(mapping, precomputed_mapping)
 
@@ -124,12 +124,12 @@ class BibleTranslation(Translation):
     """
     paragraph_mapping, inverse_paragraph_mapping = initialize_paragraph_mapping()
 
-    def __init__(self, path):
+    def __init__(self, path, translation_id):
         """
         :param path: Path to the directory containing the translation.
         :type path: str
         """
-        super().__init__(path)
+        super().__init__(path, translation_id)
         self.lines = []
         self.lines_of_paragraph = {}
 
@@ -196,6 +196,13 @@ class BibleTranslation(Translation):
         return "".join(self.lines[start:finish])
 
 
+class BibleMetadata(Metadata):
+
+    def __init__(self, data_source):
+        path_to_save_file = os.path.join(ROOT_DIR, 'data', 'bible', 'utils', 'metadata.pickle')
+        super().__init__(data_source, path_to_save_file)
+
+
 class BibleDataSource(DataSource):
     """
     Handler for the Bible translations in the database.
@@ -219,7 +226,7 @@ class BibleDataSource(DataSource):
         """
         if 0 <= translation_id < self.no_translations:
             chosen_translation_path = self._find_translation(translation_id)
-            return BibleTranslation(chosen_translation_path)
+            return BibleTranslation(chosen_translation_path, translation_id)
         else:
             raise IndexError
 
@@ -227,6 +234,9 @@ class BibleDataSource(DataSource):
         for translation_name in self._all_translations_list:
             if translation_id == int(translation_name.split("-")[0]):
                 return os.path.join(TRANSLATIONS_PATH, translation_name)
+
+    def get_metadata(self) -> BibleMetadata:
+        return BibleMetadata(data_source=self)
 
 
 if __name__ == "__main__":
