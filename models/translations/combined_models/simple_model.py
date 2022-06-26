@@ -66,7 +66,7 @@ def compute_error_rate(model, data_loader, device="cpu"):
 
 def training(model,
              data_loaders,
-             max_num_epochs=np.nan,
+             max_num_epochs=10,
              log_every=100,
              learning_rate=0.05,
              device="cpu"):
@@ -147,9 +147,12 @@ if __name__ == '__main__':
     1 am putting in your charge. He is entering the fifth form. If his 
     work and his conduct warrant it, he will be promoted to the upper 
     forms, as befits his age.”"""]
-    targets = [torch.tensor([0, 1, 3])]
+    targets = torch.tensor([0, 1, 3])
 
     feature_extractor = LSTM()
     classifier = MLP(4)
     model = MyEnsemble(feature_extractor, classifier)
-    model.train([paragraphs], targets)
+    data_loader = {'train':[(paragraphs,targets)],
+                   'valid':[paragraphs,targets],
+                   'test':[paragraphs,targets]}
+    training(model,data_loader,log_every=2)
