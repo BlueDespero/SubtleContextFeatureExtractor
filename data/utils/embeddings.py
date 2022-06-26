@@ -51,7 +51,7 @@ class BertEmbedding(Embedding):
             input_ids = encoded["input_ids"]
 
             return [
-                BertEmbedding.encode(input_id)[2][0].to(self.device) for input_id in input_ids
+                self.encode(input_id)[2][0].to(self.device) for input_id in input_ids
             ]
 
 
