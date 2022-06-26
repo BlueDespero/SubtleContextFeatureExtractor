@@ -55,12 +55,12 @@ def compute_error_rate(model, data_loader, device="cpu"):
     # we don't need gradient during eval!
     with torch.no_grad():
         for x, y in data_loader:
-            x = x.to(device)
-            y = y.to(device)
+            # x = x.to(device)
+            # y = y.to(device)
             outputs = model.forward(x)
             _, predictions = outputs.data.max(dim=1)
             num_errs += (predictions != y.data).sum().item()
-            num_examples += x.size(0)
+            num_examples += y.size(0)
     return num_errs / num_examples
 
 
@@ -153,6 +153,6 @@ if __name__ == '__main__':
     classifier = MLP(4)
     model = MyEnsemble(feature_extractor, classifier)
     data_loader = {'train':[(paragraphs,targets)],
-                   'valid':[paragraphs,targets],
-                   'test':[paragraphs,targets]}
+                   'valid':[(paragraphs,targets)],
+                   'test':[(paragraphs,targets)]}
     training(model,data_loader,log_every=2)
