@@ -4,6 +4,7 @@ from collections import defaultdict
 import nltk
 import numpy as np
 from nltk.corpus import stopwords
+from tqdm import trange
 
 
 class Translation:
@@ -29,7 +30,6 @@ def prepare_nltk():
         nltk.data.find('corpora/stopwords')
     except LookupError:
         nltk.download('stopwords')
-
 
 
 class Metadata:
@@ -73,7 +73,7 @@ class Metadata:
         self.no_unique_words = len(self.words_to_idx.keys())
         self.idx_to_words = defaultdict(lambda: "<UNK>")
         self.idx_to_words.update({
-            v: k for k, v in self.words_to_idx.keys()
+            v: k for k, v in self.words_to_idx.items()
         })
 
     def _get_metadata(self):
@@ -85,7 +85,7 @@ class Metadata:
         })
         word_idx_counter = len(self.words_to_idx.keys())
 
-        for translation_id in range(self.data_source.no_translations):
+        for translation_id in trange(self.data_source.no_translations):
             translation = self.data_source.get_translation(translation_id)
 
             if translation.no_paragraphs > self.max_number_of_paragraphs:
@@ -106,18 +106,18 @@ class Metadata:
                     self.words_to_idx[word] = word_idx_counter
                     word_idx_counter += 1
 
-        self.no_unique_words = len(self.words_to_idx.keys())
-        self.idx_to_words = defaultdict(lambda: "<UNK>")
-        self.idx_to_words.update({
-            v: k for k, v in self.words_to_idx.keys()
-        })
-
         with open(self.path_to_save_file, 'wb') as metadata_pickle:
             pickle.dump({
                 "longest_paragraph_length": self.longest_paragraph_length,
                 "max_number_of_paragraphs": self.max_number_of_paragraphs,
-                "words_to_idx": self.words_to_idx
+                "words_to_idx": {k: v for k, v in self.words_to_idx.items()}
             }, metadata_pickle)
+
+        self.no_unique_words = len(self.words_to_idx.keys())
+        self.idx_to_words = defaultdict(lambda: "<UNK>")
+        self.idx_to_words.update({
+            v: k for k, v in self.words_to_idx.items()
+        })
 
     def _purge_words(self, paragraph):
         list_of_tokens = nltk.word_tokenize(paragraph)
