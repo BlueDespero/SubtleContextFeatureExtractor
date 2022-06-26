@@ -5,8 +5,29 @@ import random
 from data.utils.DataSourceInterface import Translation, DataSource, Metadata
 from definitions import ROOT_DIR
 
+QURAN_LINES_PER_PARAGRAPH = 6
+TRANSLATIONS_PATH = os.path.join(ROOT_DIR, "data", "quran", "translations")
+
 
 class QuranTranslation(Translation):
+
+    def __init__(self, path, translation_id):
+        super().__init__(path, translation_id)
+        self.lines_of_paragraph = {}
+
+        with open(path, 'r', encoding="utf-8") as translation_text:
+            all_lines = translation_text.readlines()
+            metadata_separator_line = all_lines.index("{\n")
+            self.lines = all_lines[:metadata_separator_line]
+            self.metadata = ast.literal_eval("".join(all_lines[metadata_separator_line:]))
+
+        self.lines_of_paragraph = {i: (start, start + QURAN_LINES_PER_PARAGRAPH) for i, start in
+                                   enumerate(range(0, len(self.lines) - QURAN_LINES_PER_PARAGRAPH,
+                                                   QURAN_LINES_PER_PARAGRAPH))}
+
+        self.no_lines = len(self.lines)
+        self.no_paragraphs = max(self.lines_of_paragraph.keys())
+
     def get_line(self, line_id):
         if 0 <= line_id < self.no_lines:
             return self.lines[line_id]
@@ -14,17 +35,11 @@ class QuranTranslation(Translation):
             raise IndexError
 
     def get_paragraph(self, paragraph_id):
-        return self.get_line(paragraph_id)
+        if paragraph_id not in self.lines_of_paragraph.keys():
+            raise IndexError("%d - This translation doesn't have this paragraph." % paragraph_id)
 
-    def __init__(self, path, translation_id):
-        super().__init__(path, translation_id)
-        with open(path, 'r', encoding="utf-8") as translation_text:
-            all_lines = translation_text.readlines()
-            metadata_separator_line = all_lines.index("{\n")
-            self.lines = all_lines[:metadata_separator_line]
-            self.metadata = ast.literal_eval("".join(all_lines[metadata_separator_line:]))
-        self.no_lines = len(self.lines)
-        self.no_paragraphs = self.no_lines
+        start, finish = self.lines_of_paragraph[paragraph_id]
+        return "".join(self.lines[start:finish])
 
 
 class QuranMetadata(Metadata):
