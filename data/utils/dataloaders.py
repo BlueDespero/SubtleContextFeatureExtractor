@@ -1,12 +1,15 @@
 import random
+from time import time
 from typing import List
+
+from tqdm import tqdm
 
 from data.bible.BibleDataSource import BibleDataSource
 from data.les_miserables.LesMiserablesDataSource import LesMiserablesDataSource
 from data.madame_bovary.MadameBovaryDataSource import MadameBovaryDataSource
 from data.quran.QuranDataSource import QuranDataSource
 from data.the_count_of_monte_cristo.CountDataSource import CountDataSource
-from data.utils.DataSourceInterface import DataSource, Translation
+from data.utils.DataSourceInterface import DataSourceInterface, TranslationInterface
 from data.utils.embeddings import NAME_TO_EMBEDDING, Embedding
 
 DATASOURCE_MAPPING = {
@@ -18,7 +21,7 @@ DATASOURCE_MAPPING = {
 }
 
 
-def get_data_source_object_from_name(book_name: str) -> DataSource:
+def get_data_source_object_from_name(book_name: str) -> DataSourceInterface:
     try:
         datasource = DATASOURCE_MAPPING[book_name.lower()]
         return datasource()
@@ -63,7 +66,7 @@ class Dataloader:
             batch.append(paragraphs_embeddings)
         return batch
 
-    def _load_translations(self) -> List[Translation]:
+    def _load_translations(self) -> List[TranslationInterface]:
         prepared_translations = []
         for translation_id in self.book_translations:
             prepared_translations.append(self._data_source.get_translation(translation_id))
@@ -132,6 +135,13 @@ def create_data_loaders(book_name: str,
 
 
 if __name__ == "__main__":
-    test_loaders = create_data_loaders('bible', [1, 2, 3], [4, 5], [6, 7], batch_size=124, embedding='none',
-                                       shuffle=False)
+    test_loaders = create_data_loaders('bible', [1, 2, 3, 4], [5, 6], [7, 8], batch_size=64, embedding='bert',
+                                       shuffle=True, device='cpu')
     print(test_loaders)
+
+    print('Loop')
+    t_0 = time()
+    for batch in tqdm(test_loaders['train']):
+        pass
+    t_1 = time()
+    print(t_1 - t_0)

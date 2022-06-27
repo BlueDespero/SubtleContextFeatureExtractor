@@ -7,7 +7,7 @@ from gensim.corpora.wikicorpus import tokenize
 from multiset import Multiset
 from nltk.corpus import stopwords
 
-from data.utils.DataSourceInterface import prepare_nltk
+from data.utils.utils import prepare_nltk
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 

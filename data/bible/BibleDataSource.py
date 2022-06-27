@@ -3,11 +3,11 @@ import pickle
 import random
 from typing import TextIO, Tuple
 
-from data.utils.DataSourceInterface import Translation, DataSource, Metadata
+from data.utils.DataSourceBase import BaseDataSource, BaseMetadata, BaseTranslation
 from definitions import ROOT_DIR
 
 BIBLE_LINES_PER_PARAGRAPH = 6
-TRANSLATIONS_PATH = os.path.join(ROOT_DIR, "data/bible/translations")
+TRANSLATIONS_PATH = os.path.join(ROOT_DIR, 'data', 'bible', 'translations')
 
 
 def get_book_and_chapter(data_stream: TextIO) -> Tuple[str, int]:
@@ -112,7 +112,7 @@ def initialize_paragraph_mapping() -> Tuple[dict, dict]:
     return mapping, {v: k for k, v in mapping.items()}
 
 
-class BibleTranslation(Translation):
+class BibleTranslation(BaseTranslation):
     """
     Object allowing for interaction with a translation of the Bible.
     Translation is defined by a path given during initialization.
@@ -124,12 +124,11 @@ class BibleTranslation(Translation):
     """
     paragraph_mapping, inverse_paragraph_mapping = initialize_paragraph_mapping()
 
-    def __init__(self, path, translation_id):
+    def __init__(self, path, translation_id, embedding):
         """
         :param path: Path to the directory containing the translation.
         :type path: str
         """
-        super().__init__(path, translation_id)
         self.lines = []
         self.lines_of_paragraph = {}
 
@@ -159,51 +158,17 @@ class BibleTranslation(Translation):
 
         self.no_lines = len(self.lines)
         self.no_paragraphs = max(self.lines_of_paragraph.keys())
-
-    def get_line(self, line_id):
-        """
-        Get a single line from the translation.
-
-        :param line_id: The line of the translation which shall be returned
-        :type line_id: int
-        :return: The text of the line matching the line_id
-        :rtype: str
-        :raise IndexError: When line_id requested is not in the collection
-        """
-        if 0 <= line_id < self.no_lines:
-            return self.lines[line_id]
-        else:
-            raise IndexError
-
-    def get_paragraph(self, paragraph_id: int) -> str:
-        """
-        Get a greater section of a text, big enough to recognize the style of the translation author.
-        It should be used to get the data for the neural net we are training.
-
-        :param paragraph_id: identifier of the paragraph which shall be returned.
-        :type paragraph_id: int
-        :return: The text of a chosen paragraph. We aim to make them be around 4 lines.
-        :rtype: str
-        :raise IndexError: when paragraph_id requested is not in the collection
-        """
-        if paragraph_id < 0 or paragraph_id > max(BibleTranslation.paragraph_mapping.keys()):
-            raise IndexError('Paragraph of of range.')
-
-        if paragraph_id not in self.lines_of_paragraph.keys():
-            raise IndexError("%d - This translation doesn't have this paragraph." % paragraph_id)
-
-        start, finish = self.lines_of_paragraph[paragraph_id]
-        return "".join(self.lines[start:finish])
+        super().__init__(path, translation_id, embedding)
 
 
-class BibleMetadata(Metadata):
+class BibleMetadata(BaseMetadata):
 
     def __init__(self, data_source):
         path_to_save_file = os.path.join(ROOT_DIR, 'data', 'bible', 'utils', 'metadata.pickle')
         super().__init__(data_source, path_to_save_file)
 
 
-class BibleDataSource(DataSource):
+class BibleDataSource(BaseDataSource):
     """
     Handler for the Bible translations in the database.
     Allows for easy fetching of the translations with the get_translation method.
@@ -216,7 +181,7 @@ class BibleDataSource(DataSource):
         self._all_translations_list = os.listdir(TRANSLATIONS_PATH)
         self.no_translations = len(self._all_translations_list)
 
-    def get_translation(self, translation_id: int) -> BibleTranslation:
+    def get_translation(self, translation_id: int, embedding=None) -> BibleTranslation:
         """
         Allows you to pick a Bible translation from the translation database.
 
@@ -226,7 +191,7 @@ class BibleDataSource(DataSource):
         """
         if 0 <= translation_id < self.no_translations:
             chosen_translation_path = self._find_translation(translation_id)
-            return BibleTranslation(chosen_translation_path, translation_id)
+            return BibleTranslation(chosen_translation_path, translation_id, embedding)
         else:
             raise IndexError
 

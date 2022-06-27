@@ -2,7 +2,7 @@ import os
 import pickle
 from collections import defaultdict
 
-from data.utils.DataSourceInterface import Translation, DataSource, Metadata
+from data.utils.DataSourceBase import BaseDataSource, BaseMetadata, BaseTranslation
 from data_preprocessing.paragraph_matching.matching_algorithm import matching_two_translations
 from definitions import ROOT_DIR
 
@@ -12,10 +12,9 @@ DEFAULT_PARAGRAPH_LENGTH = 6
 MAX_PARAGRAPH_LENGTH = 20
 
 
-class MadameBovaryTranslation(Translation):
+class MadameBovaryTranslation(BaseTranslation):
 
-    def __init__(self, path, translation_id):
-        super().__init__(path, translation_id)
+    def __init__(self, path, translation_id, embedding):
         self.lines_of_paragraph = {}
         self.lines = None
 
@@ -26,24 +25,10 @@ class MadameBovaryTranslation(Translation):
 
         self.no_lines = len(self.lines)
         self.no_paragraphs = max(self.lines_of_paragraph.keys())
-
-    def get_line(self, line_id):
-        if 0 <= line_id < self.no_lines:
-            return self.lines[line_id]
-        else:
-            raise IndexError("Line id must be between 0 and {no_lines}. Is {l_id}".format(no_lines=self.no_lines,
-                                                                                          l_id=line_id))
-
-    def get_paragraph(self, paragraph_id):
-        if paragraph_id in self.lines_of_paragraph.keys():
-            start, finish = self.lines_of_paragraph[paragraph_id]
-            return "".join(self.lines[start:finish])
-        else:
-            raise IndexError("Paragraph with id {p_id} doesn't"
-                             " occur in translation {t_id}".format(p_id=paragraph_id, t_id=self.translation_id))
+        super().__init__(path, translation_id, embedding)
 
     def _get_central_translation(self):
-        return MadameBovaryTranslation(CENTRAL_MADAME_BOVARY_TRANSLATION, 0)
+        return MadameBovaryTranslation(CENTRAL_MADAME_BOVARY_TRANSLATION, 0, None)
 
     def _map_paragraphs(self):
         if self.path == CENTRAL_MADAME_BOVARY_TRANSLATION:
@@ -52,7 +37,7 @@ class MadameBovaryTranslation(Translation):
             self._central_paragraph_mapping()
 
     def _default_paragraph_mapping(self):
-        return {i: (start, start + DEFAULT_PARAGRAPH_LENGTH) for i, start in
+        return {idx: (start, start + DEFAULT_PARAGRAPH_LENGTH) for idx, start in
                 enumerate(range(0, len(self.lines) - DEFAULT_PARAGRAPH_LENGTH,
                                 DEFAULT_PARAGRAPH_LENGTH))}
 
@@ -71,7 +56,7 @@ class MadameBovaryTranslation(Translation):
             central_translation = self._get_central_translation()
 
             temp_paragraphs = ["".join(self.lines[start:finish]) for start, finish in temp_paragraph_mapping.values()]
-            central_paragraphs = [central_translation.get_paragraph(i) for i in
+            central_paragraphs = [central_translation.get_paragraph(idx) for idx in
                                   range(central_translation.no_paragraphs)]
 
             matching = matching_two_translations(temp_paragraphs, central_paragraphs)
@@ -100,23 +85,23 @@ class MadameBovaryTranslation(Translation):
             pickle.dump(self.lines_of_paragraph, mapping_file)
 
 
-class MadameBovaryMetadata(Metadata):
+class MadameBovaryMetadata(BaseMetadata):
 
     def __init__(self, data_source):
         path_to_save_file = os.path.join(ROOT_DIR, 'data', 'madame_bovary', 'utils', 'metadata.pickle')
         super().__init__(data_source, path_to_save_file)
 
 
-class MadameBovaryDataSource(DataSource):
+class MadameBovaryDataSource(BaseDataSource):
     def __init__(self):
         super().__init__()
         self.all_translations_list = os.listdir(os.path.join(ROOT_DIR, "data", "madame_bovary", "translations"))
         self.no_translations = len(self.all_translations_list)
 
-    def get_translation(self, translation_id: int) -> MadameBovaryTranslation:
+    def get_translation(self, translation_id: int, embedding=None) -> MadameBovaryTranslation:
         if 0 <= translation_id < self.no_translations:
             chosen_translation_path = self._find_translation(translation_id)
-            return MadameBovaryTranslation(chosen_translation_path, translation_id)
+            return MadameBovaryTranslation(chosen_translation_path, translation_id, embedding)
         else:
             raise IndexError
 
