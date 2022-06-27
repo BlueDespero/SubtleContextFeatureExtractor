@@ -60,7 +60,7 @@ def compute_error_rate(model, data_loader, device="cpu"):
     # we don't need gradient during eval!
     with torch.no_grad():
         for batch in data_loader:
-            batch, target = extract_batch(batch, device)
+            batch, target = extract_batch(batch, device,id_normalization)
 
             outputs = model.forward(batch)
             _, predictions = outputs.data.max(dim=1)
@@ -69,18 +69,19 @@ def compute_error_rate(model, data_loader, device="cpu"):
     return num_errs / num_examples
 
 
-def extract_batch(batch, device):
+def extract_batch(batch, device, id_normalization):
     ids = []
     text_embeddings = []
     for translations in batch:
         for translation, author_id in translations:
-            ids.append(author_id)
+            ids.append(id_normalization[author_id])
             text_embeddings.append(translation.view(-1, 1))
     return torch.stack(text_embeddings).to(device), torch.tensor(ids).to(device)
 
 
 def training(model,
              data_loaders,
+             id_normalization,
              max_num_epochs=10,
              log_every=100,
              learning_rate=0.05,
@@ -100,9 +101,10 @@ def training(model,
     try:
         tstart = time()
         while epoch < max_num_epochs:
+            model.train()
             epoch += 1
-            for batch in data_loaders['train']:
-                batch, target = extract_batch(batch, device)
+            for batch in tqdm(data_loaders['train']):
+                batch, target = extract_batch(batch, device, id_normalization)
                 iter_ += 1
                 optimizer.zero_grad()
                 predictions = model(batch)
@@ -159,12 +161,14 @@ def training(model,
 if __name__ == '__main__':
     print("Loading data...")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # test_loaders = create_data_loaders('bible', [1, 2, 3, 4], [5, 6], [7, 8], batch_size=64, embedding='bert',
-    #                                    shuffle=True, device='cpu')
+    # device = 'cpu'
+    data_loader = create_data_loaders('bible', [1, 2, 3, 4], [5, 6], [7, 8], batch_size=64, embedding='bert',
+                                       shuffle=True, device=device)
 
     # batch = test_loaders['train'][0]
     # pickle.dump(batch, open(r"batch.pickle", "wb"))
-    batch = pickle.load(open(r'batch.pickle','rb'))
+    # batch = pickle.load(open(r'batch.pickle','rb'))
+    id_normalization = {1:0,2:1,3:2,4:3}
     # print('Loop')
     # t_0 = time()
     # for batch in tqdm(test_loaders['train']):
@@ -205,11 +209,11 @@ if __name__ == '__main__':
     classifier = MLP(4)
     model = MyEnsemble(feature_extractor, classifier)
     # # data_loader = {'train':[(paragraphs,targets)]}
-    data_loader = {'train': [batch]*5,
-                   'valid': [batch]*3,
-                   'test': [batch]*2}
+    # data_loader = {'train': [batch]*5,
+    #                'valid': [batch]*3,
+    #                'test': [batch]*2}
     print('Training...')
-    training(model, data_loader, log_every=1,device=device)
+    training(model, data_loader, id_normalization, log_every=1,device=device)
     #
     torch.save(model.state_dict(),
                r'C:\Users\user\Studia\Semestr VI\NN and NLP\Project\repo\models\translations\trained_models\bible_4_bert.model')
