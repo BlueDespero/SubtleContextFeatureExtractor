@@ -7,8 +7,8 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from definitions import ROOT_DIR
-from paragraph_embedding import Word2vec_matching, jaccard_similarity
-from plotting import similarities_plot
+from data_preprocessing.paragraph_matching.tools.paragraph_embedding import Word2vec_matching, jaccard_similarity
+from data_preprocessing.paragraph_matching.tools.plotting import similarities_plot
 
 LOOK_BACK_AMOUNT = 20
 LOOK_AHEAD_AMOUNT = 40
