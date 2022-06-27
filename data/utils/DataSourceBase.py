@@ -16,8 +16,11 @@ class BaseTranslation(TranslationInterface):
     def __init__(self, path, translation_id, embedding):
         super().__init__(path, translation_id, embedding)
 
-        self.lines = []
-        self.lines_of_paragraph = {}
+        if not hasattr(self, 'lines'):
+            self.lines = []
+        if not hasattr(self, 'lines_of_paragraph'):
+            self.lines_of_paragraph = {}
+
         self.no_lines = len(self.lines)
         self.no_paragraphs = max(self.lines_of_paragraph.keys())
 
