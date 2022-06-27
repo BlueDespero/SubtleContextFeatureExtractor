@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 from collections import defaultdict
@@ -95,7 +96,8 @@ class BaseTranslation(TranslationInterface):
             self.embedded_paragraphs = pickle.load(embedding_file)
 
     def _create_embedded_paragraphs(self):
-        for i in range(self.no_paragraphs):
+        logging.info("Preparing embedding paragraphs for translation {}.".format(self.translation_id))
+        for i in trange(self.no_paragraphs):
             try:
                 self.embedded_paragraphs[i] = self.embedder.encode(self._get_pure_paragraph(i))
             except IndexError:

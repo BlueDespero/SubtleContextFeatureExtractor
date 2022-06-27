@@ -56,20 +56,20 @@ class Dataloader:
         return self._len
 
     def __getitem__(self, item):
-        batch = []
+        this_batch = []
         initial_id = item * self.batch_size
 
         for paragraph_id in self._paragraph_order[initial_id: initial_id + self.batch_size]:
             paragraphs, labels = self._get_paragraphs_from_translations(paragraph_id)
             paragraphs_embeddings = self._embedder.encode_batch(paragraphs)
             paragraphs_embeddings = [[embed, label] for embed, label in zip(paragraphs_embeddings, labels)]
-            batch.append(paragraphs_embeddings)
-        return batch
+            this_batch.append(paragraphs_embeddings)
+        return this_batch
 
     def _load_translations(self) -> List[TranslationInterface]:
         prepared_translations = []
         for translation_id in self.book_translations:
-            prepared_translations.append(self._data_source.get_translation(translation_id))
+            prepared_translations.append(self._data_source.get_translation(translation_id, embedding=self.embedding))
         return prepared_translations
 
     def _measure_length(self) -> int:

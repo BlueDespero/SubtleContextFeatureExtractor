@@ -20,6 +20,9 @@ class Embedding:
     def encode_batch(self, list_of_sentences: List[str]):
         raise NotImplemented
 
+    def get_filler_embedding(self):
+        raise NotImplemented
+
 
 class BertEmbedding(Embedding):
     model_name = "bert-large-cased"
@@ -55,6 +58,9 @@ class BertEmbedding(Embedding):
         encoded = self._encode(input_ids)
         return encoded
 
+    def get_filler_embedding(self):
+        return self.encode('<FILL>')
+
 
 class IdentityEmbedding(Embedding):
 
@@ -73,6 +79,9 @@ class IdentityEmbedding(Embedding):
 
     def encode_batch(self, list_of_sentences: List[str]):
         return [self.encode(sentence) for sentence in list_of_sentences]
+
+    def get_filler_embedding(self):
+        return [0] * self.metadata.longest_paragraph_length
 
 
 NAME_TO_EMBEDDING = {
