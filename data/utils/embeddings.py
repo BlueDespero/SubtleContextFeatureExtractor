@@ -4,6 +4,7 @@ import nltk
 import torch
 from transformers import BertTokenizer, BertModel
 
+from data.bible.BibleDataSource import BibleDataSource
 from data.utils.DataSourceInterface import Metadata, prepare_nltk
 
 
@@ -101,6 +102,21 @@ if __name__ == "__main__":
     )
     embedding2 = embedder.encode_batch([sentence1, sentence2])
     embedding3 = embedder.encode_batch([sentence2, sentence1])
+
+    print(embedding1)
+    print(embedding2)
+    print(embedding3)
+
+    bible_hook = BibleDataSource()
+    bible_translation = bible_hook.get_translation(1)
+    bible_metadata = bible_hook.get_metadata()
+
+    embedder = IdentityEmbedding(metadata=bible_metadata)
+    embedding1 = embedder.encode(
+        bible_translation.get_line(4)
+    )
+    embedding2 = embedder.encode_batch([bible_translation.get_line(1), bible_translation.get_line(2)])
+    embedding3 = embedder.encode_batch([bible_translation.get_line(2), bible_translation.get_line(1)])
 
     print(embedding1)
     print(embedding2)
