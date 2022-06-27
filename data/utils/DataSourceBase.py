@@ -11,6 +11,8 @@ from tqdm import trange
 from data.utils.DataSourceInterface import DataSourceInterface, MetadataInterface, TranslationInterface
 from data.utils.embeddings import NAME_TO_EMBEDDING, Embedding
 from data.utils.utils import prepare_nltk
+from data_preprocessing.paragraph_matching.matching_algorithm import matching_two_translations
+from definitions import DEFAULT_PARAGRAPH_LENGTH, MAX_PARAGRAPH_LENGTH
 
 
 class BaseTranslation(TranslationInterface):
@@ -111,6 +113,77 @@ class BaseTranslation(TranslationInterface):
     def _save_embedding(self):
         with open(self.path_to_embedding_file, 'wb') as embedding_file:
             pickle.dump(self.embedded_paragraphs, embedding_file)
+
+
+class BaseMatchingTranslation(BaseTranslation):
+    def __init__(self, path, translation_id, embedding):
+        if not hasattr(self, 'path_to_mapping'):
+            self.path_to_mapping = None
+        self.lines_of_paragraph = {}
+        self.lines = None
+        self.path = path
+        self.translation_id = translation_id
+        self.embedding = embedding
+
+        with open(path, 'r', encoding="utf-8") as translation_text:
+            self.lines = translation_text.readlines()
+
+        self._map_paragraphs()
+
+        self.no_lines = len(self.lines)
+        self.no_paragraphs = max(self.lines_of_paragraph.keys())
+        super().__init__(path, translation_id, embedding)
+
+    def _get_central_translation(self):
+        raise NotImplemented
+
+    def _map_paragraphs(self):
+        raise NotImplemented
+
+    def _default_paragraph_mapping(self):
+        return {idx: (start, start + DEFAULT_PARAGRAPH_LENGTH) for idx, start in
+                enumerate(range(0, len(self.lines) - DEFAULT_PARAGRAPH_LENGTH,
+                                DEFAULT_PARAGRAPH_LENGTH))}
+
+    def _solo_paragraph_mapping(self):
+        try:
+            self._load_precomputed_mapping()
+        except FileNotFoundError:
+            self.lines_of_paragraph = self._default_paragraph_mapping()
+            self._save_precomputed_mapping()
+
+    def _central_paragraph_mapping(self):
+        try:
+            self._load_precomputed_mapping()
+        except FileNotFoundError:
+            temp_paragraph_mapping = self._default_paragraph_mapping()
+            central_translation = self._get_central_translation()
+
+            temp_paragraphs = ["".join(self.lines[start:finish]) for start, finish in
+                               temp_paragraph_mapping.values()]
+            central_paragraphs = [central_translation.get_paragraph(idx) for idx in
+                                  range(central_translation.no_paragraphs)]
+
+            matching = matching_two_translations(temp_paragraphs, central_paragraphs)
+
+            created_mapping = defaultdict(list)
+            for temp, central in matching:
+                created_mapping[central] += list(temp_paragraph_mapping[temp])
+
+            for paragraph_id, indices in created_mapping.items():
+                start = min(indices)
+                finish = max(indices)
+                if finish - start <= MAX_PARAGRAPH_LENGTH:
+                    self.lines_of_paragraph[paragraph_id] = (start, finish)
+            self._save_precomputed_mapping()
+
+    def _load_precomputed_mapping(self):
+        with open(self.path_to_mapping, 'rb') as mapping_file:
+            self.lines_of_paragraph = pickle.load(mapping_file)
+
+    def _save_precomputed_mapping(self):
+        with open(self.path_to_mapping, 'wb') as mapping_file:
+            pickle.dump(self.lines_of_paragraph, mapping_file)
 
 
 class BaseMetadata(MetadataInterface):
