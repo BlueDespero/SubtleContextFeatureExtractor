@@ -30,6 +30,25 @@ def get_data_source_object_from_name(book_name: str) -> DataSourceInterface:
                        "Available picks: {list}".format(name=book_name, list=DATASOURCE_MAPPING.keys()))
 
 
+class DataLoaderIterator:
+    def __init__(self, dataloader):
+        self._dataloader: Dataloader
+        self._dataloader = dataloader
+        # member variable to keep track of current index
+        self._index = 0
+
+    def __next__(self):
+        if self._index < self._dataloader._len:
+            if self._index < len(self._team._juniorMembers):  # Check if junior members are fully iterated or not
+                result = (self._team._juniorMembers[self._index], 'junior')
+            else:
+                result = (self._team._seniorMembers[self._index - len(self._team._juniorMembers)], 'senior')
+            self._index += 1
+            return result
+        # End of Iteration
+        raise StopIteration
+
+
 class Dataloader:
     def __init__(self,
                  book_name: str,
@@ -53,6 +72,7 @@ class Dataloader:
         self._metadata = self._data_source.get_metadata()
         self._embedder = self._get_embedder()
         self._paragraph_order = self._get_order()
+        self._index = 0
 
     def __len__(self) -> int:
         return self._len
@@ -67,6 +87,24 @@ class Dataloader:
             this_batch.append(paragraphs_embeddings)
         return this_batch
 
+    def __iter__(self):
+        self._index = 0
+        return self
+
+    def __next__(self):
+        this_batch = []
+        initial_id = self._index * self.batch_size
+
+        if self._index <= self._len:
+            for paragraph_id in self._paragraph_order[initial_id: initial_id + self.batch_size]:
+                paragraphs, labels = self._get_paragraphs_from_translations(paragraph_id)
+                paragraphs_embeddings = [[embed, label] for embed, label in zip(paragraphs, labels)]
+                this_batch.append(paragraphs_embeddings)
+            self._index += 1
+            return this_batch
+
+        raise StopIteration
+
     def _load_translations(self) -> List[TranslationInterface]:
         prepared_translations = []
         for translation_id in self.book_translations:
@@ -74,8 +112,7 @@ class Dataloader:
         return prepared_translations
 
     def _measure_length(self) -> int:
-        max_paragraphs = max([translation.no_paragraphs for translation in self._translations])
-        return max_paragraphs / self.batch_size
+        return int(len(self.paragraphs) / self.batch_size)
 
     def _get_embedder(self) -> Embedding:
         return NAME_TO_EMBEDDING[self.embedding.lower()](device=self.device, metadata=self._metadata)
