@@ -5,8 +5,8 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from data.bible.BibleDataSource import BibleDataSource, BibleTranslation
-from paragraph_embedding import jaccard_similarity
-from plotting import similarities_plot
+from data_preprocessing.paragraph_matching.tools.paragraph_embedding import jaccard_similarity
+from data_preprocessing.paragraph_matching.tools.plotting import similarities_plot
 
 
 def similarity_metric_evaluation_based_on_bible(similarity_metric, metric_name: str,

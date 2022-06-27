@@ -7,8 +7,8 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from definitions import ROOT_DIR
-from paragraph_embedding import Word2vec_matching, jaccard_similarity
-from plotting import similarities_plot
+from data_preprocessing.paragraph_matching.tools.paragraph_embedding import Word2vec_matching, jaccard_similarity
+from data_preprocessing.paragraph_matching.tools.plotting import similarities_plot
 
 LOOK_BACK_AMOUNT = 20
 LOOK_AHEAD_AMOUNT = 40
@@ -46,7 +46,7 @@ def matching_two_translations(list_of_paragraphs_1, list_of_paragraphs_2, fast_m
         if np.min(row) != np.max(row):
             results.append((y, np.argmax(row)))
 
-    matches = [(list_of_paragraphs_1[y], list_of_paragraphs_1[x]) for y, x in results]
+    matches = [(y, x) for y, x in results]
     if pickle_result:
         pickle.dump(matches, open(datetime.now().strftime("%d_%m_%Y__%H_%M_%S.pickle"), 'wb'))
 
@@ -104,10 +104,12 @@ if __name__ == '__main__':
         return [line for line in file.read().split('\n\n') if len(line.split()) > 3]
 
 
-    path = os.path.join(ROOT_DIR, "data/madame_bovary")
+    path = os.path.join(ROOT_DIR, 'data','madame_bovary','translations')
     translations = [get_translation(open(os.path.join(path, file_name), 'r', encoding='UTF-8'))[:20] for file_name in
                     listdir(path)]
 
-    matching_two_translations(translations[0], translations[1], fast_mode=True, plot_results=True,
+    matching_result = matching_two_translations(translations[0], translations[1], fast_mode=True, plot_results=False,
                               pickle_result=False)
+    print(matching_result)
+    pass
     # matching(translations, fast_mode=True, pickle_result=True)
