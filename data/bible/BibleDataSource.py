@@ -109,7 +109,7 @@ def initialize_paragraph_mapping() -> Tuple[dict, dict]:
                     position += no_lines_read
 
             handled_files.add(file_under_consideration)
-            handled_files = True
+            files_changed = True
 
     if files_changed:
         save_computed_files(mapping, handled_files)
