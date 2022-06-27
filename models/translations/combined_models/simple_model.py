@@ -9,6 +9,8 @@ from models.translations.feature_extraction.LSTM import LSTM
 from time import time
 from models.data_loaders import InMemDataLoader
 from data.utils.dataloaders import create_data_loaders
+from tqdm.auto import tqdm
+import pickle
 
 
 class MyEnsemble(nn.Module):
@@ -73,8 +75,8 @@ def extract_batch(batch, device):
     for translations in batch:
         for translation, author_id in translations:
             ids.append(author_id)
-            text_embeddings.append(translation)
-    return torch.tensor(ids).to(device), torch.stack(text_embeddings).to(device)
+            text_embeddings.append(translation.view(-1, 1))
+    return torch.stack(text_embeddings).to(device), torch.tensor(ids).to(device)
 
 
 def training(model,
@@ -99,8 +101,8 @@ def training(model,
         tstart = time()
         while epoch < max_num_epochs:
             epoch += 1
-            for batch, target in data_loaders['train']:
-                # batch, target = extract_batch(batch, device)
+            for batch in data_loaders['train']:
+                batch, target = extract_batch(batch, device)
                 iter_ += 1
                 optimizer.zero_grad()
                 predictions = model(batch)
@@ -157,8 +159,18 @@ def training(model,
 if __name__ == '__main__':
     print("Loading data...")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    test_loaders = create_data_loaders('bible', [1, 2, 3, 4], [5, 6], [7, 8], batch_size=64, embedding='bert',
-                                       shuffle=True, device='cpu')
+    # test_loaders = create_data_loaders('bible', [1, 2, 3, 4], [5, 6], [7, 8], batch_size=64, embedding='bert',
+    #                                    shuffle=True, device='cpu')
+
+    # batch = test_loaders['train'][0]
+    # pickle.dump(batch, open(r"batch.pickle", "wb"))
+    batch = pickle.load(open(r'batch.pickle','rb'))
+    # print('Loop')
+    # t_0 = time()
+    # for batch in tqdm(test_loaders['train']):
+    #     pass
+    # t_1 = time()
+    # print(t_1-t_0)
 
     # paragraphs = ["""
     # We were in study hall when the
@@ -178,25 +190,26 @@ if __name__ == '__main__':
 
     # get temporary validation, and test sets
     print('Train, valid, test set split...')
-    valid = []
-    test = []
-    for i, sample in enumerate(test_loaders):
-        if i<100:
-            valid.append(sample)
-        elif i<200:
-            test.append(sample)
-        else:
-            break
+    # valid = []
+    # test = []
+    # for i, sample in enumerate(test_loaders):
+    #     if i<100:
+    #         valid.append(sample)
+    #     elif i<200:
+    #         test.append(sample)
+    #     else:
+    #         break
+
     print('Model initialization...')
     feature_extractor = LSTM()
     classifier = MLP(4)
     model = MyEnsemble(feature_extractor, classifier)
-    # data_loader = {'train':[(paragraphs,targets)]}
-    data_loader = {'train': test_loaders['train'],
-                   'valid': valid,
-                   'test': test}
+    # # data_loader = {'train':[(paragraphs,targets)]}
+    data_loader = {'train': [batch]*5,
+                   'valid': [batch]*3,
+                   'test': [batch]*2}
     print('Training...')
     training(model, data_loader, log_every=1,device=device)
-
+    #
     torch.save(model.state_dict(),
                r'C:\Users\user\Studia\Semestr VI\NN and NLP\Project\repo\models\translations\trained_models\bible_4_bert.model')
