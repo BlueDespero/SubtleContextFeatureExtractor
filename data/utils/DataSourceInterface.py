@@ -12,6 +12,7 @@ class Translation:
         self.no_lines = None
         self.no_paragraphs = None
         self.translation_id = translation_id
+        self.path = path
 
     def get_line(self, line_id):
         raise NotImplemented
