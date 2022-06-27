@@ -8,8 +8,8 @@ class MLP(nn.Module):
                                     nn.ReLU(),
                                     nn.Linear(dimension, dimension),
                                     nn.ReLU(),
-                                    nn.Linear(dimension, output_size),
-                                    nn.Sigmoid())
+                                    nn.Linear(dimension, output_size))
+        #                           nn.Softmax(dim=0)
 
     def forward(self, paragraph_embeddings):
         """

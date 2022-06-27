@@ -18,15 +18,17 @@ class MyEnsemble(nn.Module):
         super(MyEnsemble, self).__init__()
         self.Feature_extractor = feature_extractor
         self.Classifier = classifier
+        self.loss_function = nn.CrossEntropyLoss()
+        self.dropout = nn.Dropout(p=0.4)
 
     def forward(self, list_of_paragraphs):
         paragraph_embeddings = self.Feature_extractor(list_of_paragraphs)
+        paragraph_embeddings = self.dropout(paragraph_embeddings)
         predictions = self.Classifier(paragraph_embeddings)
         return predictions
 
-    @staticmethod
-    def loss(predictions, targets):
-        return nll_loss(predictions, targets)
+    def loss(self, predictions, targets):
+        return self.loss_function(predictions, targets)
 
 
 def plot_history(history):
@@ -60,8 +62,9 @@ def compute_error_rate(model, data_loader, device="cpu"):
     # we don't need gradient during eval!
     with torch.no_grad():
         for batch in data_loader:
-            batch, target = extract_batch(batch, device,id_normalization)
-
+            batch, target = extract_batch(batch, device)
+            if batch is None:
+                continue
             outputs = model.forward(batch)
             _, predictions = outputs.data.max(dim=1)
             num_errs += (predictions != target.data).sum().item()
@@ -69,19 +72,20 @@ def compute_error_rate(model, data_loader, device="cpu"):
     return num_errs / num_examples
 
 
-def extract_batch(batch, device, id_normalization):
+def extract_batch(batch, device):
     ids = []
     text_embeddings = []
     for translations in batch:
         for translation, author_id in translations:
-            ids.append(id_normalization[author_id])
-            text_embeddings.append(translation.view(-1, 1))
-    return torch.stack(text_embeddings).to(device), torch.tensor(ids).to(device)
-
+            if translation is not None:
+                ids.append(author_id)
+                text_embeddings.append(translation.view(-1, 1))
+    if ids:
+        return torch.stack(text_embeddings).to(device), torch.tensor(ids).to(device)
+    return None, None
 
 def training(model,
              data_loaders,
-             id_normalization,
              max_num_epochs=10,
              log_every=100,
              learning_rate=0.05,
@@ -103,8 +107,10 @@ def training(model,
         while epoch < max_num_epochs:
             model.train()
             epoch += 1
-            for batch in tqdm(data_loaders['train']):
-                batch, target = extract_batch(batch, device, id_normalization)
+            for batch in data_loaders['train']:
+                batch, target = extract_batch(batch, device)
+                if batch is None:
+                    continue
                 iter_ += 1
                 optimizer.zero_grad()
                 predictions = model(batch)
@@ -129,7 +135,7 @@ def training(model,
                         )
                     )
                     tstart = time()
-            val_err_rate = compute_error_rate(model, data_loaders["valid"], device)
+            val_err_rate = compute_error_rate(model, data_loaders["validation"], device)
             history["val_errs"].append((iter_, val_err_rate))
 
             if val_err_rate < best_val_err:
@@ -140,8 +146,7 @@ def training(model,
             m = "After epoch {0: >2} | valid err rate: {1: >5.2f}%".format(epoch, val_err_rate * 100.0)
             print("{0}\n{1}\n{0}".format("-" * len(m), m))
 
-            torch.save(model.state_dict(),
-                       r'C:\Users\user\Studia\Semestr VI\NN and NLP\Project\repo\models\translations\trained_models\bible_4_bert.model')
+            torch.save(model.Feature_extractor.state_dict(), r'..\trained_models\FE_bert.model')
 
     except KeyboardInterrupt:
         if best_params is not None:
@@ -157,63 +162,4 @@ def training(model,
         print("{0}\n{1}\n{0}".format("-" * len(m), m))
         plot_history(history)
 
-
-if __name__ == '__main__':
-    print("Loading data...")
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # device = 'cpu'
-    data_loader = create_data_loaders('bible', [1, 2, 3, 4], [5, 6], [7, 8], batch_size=64, embedding='bert',
-                                       shuffle=True, device=device)
-
-    # batch = test_loaders['train'][0]
-    # pickle.dump(batch, open(r"batch.pickle", "wb"))
-    # batch = pickle.load(open(r'batch.pickle','rb'))
-    id_normalization = {1:0,2:1,3:2,4:3}
-    # print('Loop')
-    # t_0 = time()
-    # for batch in tqdm(test_loaders['train']):
-    #     pass
-    # t_1 = time()
-    # print(t_1-t_0)
-
-    # paragraphs = ["""
-    # We were in study hall when the
-    # Headmaster entered, followed by a “new boy”
-    # dressed in ordinary clothes and by a classmate who was
-    # carrying a large desk. Those who were asleep woke up, and every¬
-    # one stood up as if taken imawares while at work.
-    # """, """The Headmaster made us a sign to be seated; then, turning
-    # toward the master in charge of study hall:
-    # """, """“Monsieur Roger,” he said in a low tone, “here is a student whom
-    # 1 am putting in your charge. He is entering the fifth form. If his
-    # work and his conduct warrant it, he will be promoted to the upper
-    # forms, as befits his age.”"""]
-    #
-    # targets = torch.tensor([0, 1, 3])
-    # t,b = extract_batch(test_loaders['train'][0], device)
-
-    # get temporary validation, and test sets
-    print('Train, valid, test set split...')
-    # valid = []
-    # test = []
-    # for i, sample in enumerate(test_loaders):
-    #     if i<100:
-    #         valid.append(sample)
-    #     elif i<200:
-    #         test.append(sample)
-    #     else:
-    #         break
-
-    print('Model initialization...')
-    feature_extractor = LSTM()
-    classifier = MLP(4)
-    model = MyEnsemble(feature_extractor, classifier)
-    # # data_loader = {'train':[(paragraphs,targets)]}
-    # data_loader = {'train': [batch]*5,
-    #                'valid': [batch]*3,
-    #                'test': [batch]*2}
-    print('Training...')
-    training(model, data_loader, id_normalization, log_every=1,device=device)
-    #
-    torch.save(model.state_dict(),
-               r'C:\Users\user\Studia\Semestr VI\NN and NLP\Project\repo\models\translations\trained_models\bible_4_bert.model')
+    torch.save(model.Feature_extractor.state_dict(), r'..\trained_models\FE_bert.model')
