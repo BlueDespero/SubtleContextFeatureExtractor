@@ -35,12 +35,14 @@ class Dataloader:
                  book_name: str,
                  book_translations: List[int],
                  batch_size: int,
+                 paragraphs: List[int],
                  embedding: str = 'bert',
                  shuffle: bool = True,
                  device: str = 'cpu') -> None:
         self.book_name = book_name
         self.book_translations = book_translations
         self.batch_size = batch_size
+        self.paragraphs = paragraphs
         self.embedding = embedding
         self.shuffle = shuffle
         self.device = device
@@ -61,8 +63,7 @@ class Dataloader:
 
         for paragraph_id in self._paragraph_order[initial_id: initial_id + self.batch_size]:
             paragraphs, labels = self._get_paragraphs_from_translations(paragraph_id)
-            paragraphs_embeddings = self._embedder.encode_batch(paragraphs)
-            paragraphs_embeddings = [[embed, label] for embed, label in zip(paragraphs_embeddings, labels)]
+            paragraphs_embeddings = [[embed, label] for embed, label in zip(paragraphs, labels)]
             this_batch.append(paragraphs_embeddings)
         return this_batch
 
@@ -92,51 +93,75 @@ class Dataloader:
         return paragraphs, labels
 
     def _get_order(self):
-        order = list(range(self._metadata.max_number_of_paragraphs))
+        order = self.paragraphs
         if self.shuffle:
             random.shuffle(order)
         return order
 
 
 def create_data_loaders(book_name: str,
-                        training_translations: List[int],
-                        testing_translations: List[int],
-                        validation_translations: List[int],
+                        translations: List[int],
+                        training_proportion: float,
+                        testing_proportion: float,
+                        validation_proportion: float,
                         batch_size: int,
                         embedding: str = 'bert',
                         shuffle: bool = True,
                         device: str = 'cpu'
                         ):
+    ds: DataSourceInterface
+    ds = DATASOURCE_MAPPING[book_name]()
+    metadata = ds.get_metadata()
+
+    paragraphs_ids = list(range(metadata.max_number_of_paragraphs))
+    random.shuffle(paragraphs_ids)
+
+    assert (training_proportion + testing_proportion + validation_proportion) == 1.0
+
+    training_part = int(metadata.max_number_of_paragraphs * training_proportion)
+    testing_part = int(metadata.max_number_of_paragraphs * testing_proportion)
+    validation_part = int(metadata.max_number_of_paragraphs * validation_proportion)
+
     return {'train': Dataloader(
         book_name,
-        training_translations,
+        translations,
         batch_size,
-        embedding,
-        shuffle,
-        device
+        paragraphs_ids[:training_part],
+        embedding=embedding,
+        shuffle=shuffle,
+        device=device
     ),
         'validation': Dataloader(
             book_name,
-            testing_translations,
+            translations,
             batch_size,
-            embedding,
-            shuffle,
-            device
+            paragraphs_ids[training_part:training_part + testing_part],
+            embedding=embedding,
+            shuffle=shuffle,
+            device=device
         ),
         'test': Dataloader(
             book_name,
-            validation_translations,
+            translations,
             batch_size,
-            embedding,
-            shuffle,
-            device
+            paragraphs_ids[-validation_part:],
+            embedding=embedding,
+            shuffle=shuffle,
+            device=device
         )
     }
 
 
 if __name__ == "__main__":
-    test_loaders = create_data_loaders('bible', [1, 2, 3, 4], [5, 6], [7, 8], batch_size=64, embedding='bert',
-                                       shuffle=True, device='cpu')
+    test_loaders = create_data_loaders('madame bovary',
+                                       translations=[0, 1, 2, 3],
+                                       training_proportion=0.7,
+                                       testing_proportion=0.15,
+                                       validation_proportion=0.15,
+                                       batch_size=64,
+                                       embedding='bert',
+                                       shuffle=True,
+                                       device='cpu')
     print(test_loaders)
 
     print('Loop')
