@@ -49,9 +49,9 @@ def get_next_n_lines(data_stream: TextIO, n: int):
 
 def load_precomputed_files() -> Tuple[dict, set]:
     try:
-        with open(os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"),
+        with open(os.path.join(ROOT_DIR, "data/bible/preprocessed_data/files_already_mapped.pickle"),
                   'rb') as translations_already_mapped, open(
-            os.path.join(ROOT_DIR, "data/bible/utils/precomputed_mapping.pickle"), 'rb') as precomputed_mapping:
+            os.path.join(ROOT_DIR, "data/bible/preprocessed_data/precomputed_mapping.pickle"), 'rb') as precomputed_mapping:
             mapping = pickle.load(precomputed_mapping)
             handled_files = pickle.load(translations_already_mapped)
             return mapping, handled_files
@@ -60,9 +60,9 @@ def load_precomputed_files() -> Tuple[dict, set]:
 
 
 def save_computed_files(mapping: dict, handled_files: set):
-    with open(os.path.join(ROOT_DIR, "data/bible/utils/files_already_mapped.pickle"),
+    with open(os.path.join(ROOT_DIR, "data/bible/preprocessed_data/files_already_mapped.pickle"),
               'wb') as translations_already_mapped, open(
-        os.path.join(ROOT_DIR, "data/bible/utils/precomputed_mapping.pickle"), 'wb') as precomputed_mapping:
+        os.path.join(ROOT_DIR, "data/bible/preprocessed_data/precomputed_mapping.pickle"), 'wb') as precomputed_mapping:
         pickle.dump(handled_files, translations_already_mapped)
         pickle.dump(mapping, precomputed_mapping)
 
@@ -164,7 +164,7 @@ class BibleTranslation(BaseTranslation):
 class BibleMetadata(BaseMetadata):
 
     def __init__(self, data_source):
-        path_to_save_file = os.path.join(ROOT_DIR, 'data', 'bible', 'utils', 'metadata.pickle')
+        path_to_save_file = os.path.join(ROOT_DIR, 'data', 'bible', 'preprocessed_data', 'metadata.pickle')
         super().__init__(data_source, path_to_save_file)
 
 

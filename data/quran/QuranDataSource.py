@@ -27,7 +27,7 @@ class QuranTranslation(BaseTranslation):
 class QuranMetadata(BaseMetadata):
 
     def __init__(self, data_source):
-        path_to_save_file = os.path.join(ROOT_DIR, 'data', 'quran', 'utils', 'metadata.pickle')
+        path_to_save_file = os.path.join(ROOT_DIR, 'data', 'quran', 'preprocessed_data', 'metadata.pickle')
         super().__init__(data_source, path_to_save_file)
 
 
