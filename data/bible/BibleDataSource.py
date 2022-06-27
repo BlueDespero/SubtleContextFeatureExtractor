@@ -49,9 +49,10 @@ def get_next_n_lines(data_stream: TextIO, n: int):
 
 def load_precomputed_files() -> Tuple[dict, set]:
     try:
-        with open(os.path.join(ROOT_DIR, "data/bible/preprocessed_data/files_already_mapped.pickle"),
+        with open(os.path.join(ROOT_DIR, 'data', 'bible', 'preprocessed_data', 'files_already_mapped.pickle'),
                   'rb') as translations_already_mapped, open(
-            os.path.join(ROOT_DIR, "data/bible/preprocessed_data/precomputed_mapping.pickle"), 'rb') as precomputed_mapping:
+            os.path.join(ROOT_DIR, 'data', 'bible', 'preprocessed_data', 'precomputed_mapping.pickle'),
+            'rb') as precomputed_mapping:
             mapping = pickle.load(precomputed_mapping)
             handled_files = pickle.load(translations_already_mapped)
             return mapping, handled_files
@@ -60,9 +61,10 @@ def load_precomputed_files() -> Tuple[dict, set]:
 
 
 def save_computed_files(mapping: dict, handled_files: set):
-    with open(os.path.join(ROOT_DIR, "data/bible/preprocessed_data/files_already_mapped.pickle"),
+    with open(os.path.join(ROOT_DIR, 'data', 'bible', 'preprocessed_data', 'files_already_mapped.pickle'),
               'wb') as translations_already_mapped, open(
-        os.path.join(ROOT_DIR, "data/bible/preprocessed_data/precomputed_mapping.pickle"), 'wb') as precomputed_mapping:
+        os.path.join(ROOT_DIR, 'data', 'bible', 'preprocessed_data', 'precomputed_mapping.pickle'),
+        'wb') as precomputed_mapping:
         pickle.dump(handled_files, translations_already_mapped)
         pickle.dump(mapping, precomputed_mapping)
 
@@ -76,6 +78,7 @@ def initialize_paragraph_mapping() -> Tuple[dict, dict]:
     :rtype: tuple[dict, dict]
     """
     counter = 0
+    files_changed = False
     mapping, handled_files = load_precomputed_files()
 
     for translation_dict in os.listdir(TRANSLATIONS_PATH):
@@ -106,8 +109,10 @@ def initialize_paragraph_mapping() -> Tuple[dict, dict]:
                     position += no_lines_read
 
             handled_files.add(file_under_consideration)
+            handled_files = True
 
-    save_computed_files(mapping, handled_files)
+    if files_changed:
+        save_computed_files(mapping, handled_files)
 
     return mapping, {v: k for k, v in mapping.items()}
 
