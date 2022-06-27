@@ -42,6 +42,8 @@ class BertEmbedding(Embedding):
             [sentence],
             padding='longest',
             return_tensors="pt",
+            truncation=True,
+            max_length=512
         )
         input_id = encoded["input_ids"]
 
@@ -52,6 +54,8 @@ class BertEmbedding(Embedding):
             list_of_sentences,
             padding='longest',
             return_tensors="pt",
+            truncation=True,
+            max_length=512
         )
 
         input_ids = encoded["input_ids"]
