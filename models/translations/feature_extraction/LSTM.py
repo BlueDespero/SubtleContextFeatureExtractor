@@ -39,22 +39,22 @@ class LSTM(nn.Module):
         """
         super(LSTM, self).__init__()
 
-        w2v = gensim.downloader.load(gensim_model)
-        embedding_size = w2v.vector_size
+        # w2v = gensim.downloader.load(gensim_model)
+        # embedding_size = w2v.vector_size
 
-        self.embedding = lambda list_of_paragraphs: embedding(w2v, list_of_paragraphs, embedding_size)
+        # self.embedding = lambda list_of_paragraphs: embedding(w2v, list_of_paragraphs, embedding_size)
 
         self.dimension = dimension
-        self.lstm = nn.LSTM(input_size=embedding_size,
+        self.lstm = nn.LSTM(input_size=1,
                             hidden_size=dimension,
-                            num_layers=1,
+                            num_layers=2,
                             batch_first=True)
 
         self.drop = nn.Dropout(p=0.5)
 
-    def forward(self, paragraph: str):
-        embeds = self.embedding(paragraph)
-        lstm_out, _ = self.lstm(embeds)
+    def forward(self, paragraph):
+        # embeds = self.embedding(paragraph)
+        lstm_out, _ = self.lstm(paragraph) # batch_size, input_size, output_size
         lstm_out = self.drop(lstm_out)
         return torch.amax(lstm_out, dim=1)
 

@@ -8,6 +8,7 @@ from models.translations.classification.MLP import MLP
 from models.translations.feature_extraction.LSTM import LSTM
 from time import time
 from models.data_loaders import InMemDataLoader
+from data.utils.dataloaders import create_data_loaders
 
 
 class MyEnsemble(nn.Module):
@@ -25,6 +26,7 @@ class MyEnsemble(nn.Module):
     def loss(predictions, targets):
         return nll_loss(predictions, targets)
 
+
 def plot_history(history):
     """Helper to plot the trainig progress over time."""
     plt.figure(figsize=(16, 4))
@@ -41,6 +43,7 @@ def plot_history(history):
     plt.ylim(0, 0.20)
     plt.legend()
 
+
 def compute_error_rate(model, data_loader, device="cpu"):
     """Evaluate model on all samples from the data loader.
     """
@@ -54,14 +57,24 @@ def compute_error_rate(model, data_loader, device="cpu"):
     num_examples = 0
     # we don't need gradient during eval!
     with torch.no_grad():
-        for x, y in data_loader:
-            # x = x.to(device)
-            # y = y.to(device)
-            outputs = model.forward(x)
+        for batch in data_loader:
+            batch, target = extract_batch(batch, device)
+
+            outputs = model.forward(batch)
             _, predictions = outputs.data.max(dim=1)
-            num_errs += (predictions != y.data).sum().item()
-            num_examples += y.size(0)
+            num_errs += (predictions != target.data).sum().item()
+            num_examples += target.size(0)
     return num_errs / num_examples
+
+
+def extract_batch(batch, device):
+    ids = []
+    text_embeddings = []
+    for translations in batch:
+        for translation, author_id in translations:
+            ids.append(author_id)
+            text_embeddings.append(translation)
+    return torch.tensor(ids).to(device), torch.stack(text_embeddings).to(device)
 
 
 def training(model,
@@ -70,6 +83,7 @@ def training(model,
              log_every=100,
              learning_rate=0.05,
              device="cpu"):
+    print('Init...')
     model.train()
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -80,11 +94,13 @@ def training(model,
     epoch = 0
     iter_ = 0
 
+    print('Proper training loop...')
     try:
         tstart = time()
         while epoch < max_num_epochs:
             epoch += 1
             for batch, target in data_loaders['train']:
+                # batch, target = extract_batch(batch, device)
                 iter_ += 1
                 optimizer.zero_grad()
                 predictions = model(batch)
@@ -119,6 +135,10 @@ def training(model,
                 best_params = [p.detach().cpu() for p in model.parameters()]
             m = "After epoch {0: >2} | valid err rate: {1: >5.2f}%".format(epoch, val_err_rate * 100.0)
             print("{0}\n{1}\n{0}".format("-" * len(m), m))
+
+            torch.save(model.state_dict(),
+                       r'C:\Users\user\Studia\Semestr VI\NN and NLP\Project\repo\models\translations\trained_models\bible_4_bert.model')
+
     except KeyboardInterrupt:
         if best_params is not None:
             print("\nLoading best params on validation set (epoch %d)\n" % (best_epoch))
@@ -128,31 +148,55 @@ def training(model,
         test_err_rate = compute_error_rate(model, data_loaders["test"])
         m = (
             f"Test error rate: {test_err_rate * 100.0:.3f}%, "
-            f"training took {time.time() - tstart:.0f}s."
+            f"training took {time() - tstart:.0f}s."
         )
         print("{0}\n{1}\n{0}".format("-" * len(m), m))
         plot_history(history)
 
 
 if __name__ == '__main__':
-    paragraphs = ["""
-    We were in study hall when the
-    Headmaster entered, followed by a “new boy” 
-    dressed in ordinary clothes and by a classmate who was 
-    carrying a large desk. Those who were asleep woke up, and every¬ 
-    one stood up as if taken imawares while at work. 
-    """, """The Headmaster made us a sign to be seated; then, turning 
-    toward the master in charge of study hall: 
-    """, """“Monsieur Roger,” he said in a low tone, “here is a student whom 
-    1 am putting in your charge. He is entering the fifth form. If his 
-    work and his conduct warrant it, he will be promoted to the upper 
-    forms, as befits his age.”"""]
-    targets = torch.tensor([0, 1, 3])
+    print("Loading data...")
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    test_loaders = create_data_loaders('bible', [1, 2, 3, 4], [5, 6], [7, 8], batch_size=64, embedding='bert',
+                                       shuffle=True, device='cpu')
 
+    # paragraphs = ["""
+    # We were in study hall when the
+    # Headmaster entered, followed by a “new boy”
+    # dressed in ordinary clothes and by a classmate who was
+    # carrying a large desk. Those who were asleep woke up, and every¬
+    # one stood up as if taken imawares while at work.
+    # """, """The Headmaster made us a sign to be seated; then, turning
+    # toward the master in charge of study hall:
+    # """, """“Monsieur Roger,” he said in a low tone, “here is a student whom
+    # 1 am putting in your charge. He is entering the fifth form. If his
+    # work and his conduct warrant it, he will be promoted to the upper
+    # forms, as befits his age.”"""]
+    #
+    # targets = torch.tensor([0, 1, 3])
+    # t,b = extract_batch(test_loaders['train'][0], device)
+
+    # get temporary validation, and test sets
+    print('Train, valid, test set split...')
+    valid = []
+    test = []
+    for i, sample in enumerate(test_loaders):
+        if i<100:
+            valid.append(sample)
+        elif i<200:
+            test.append(sample)
+        else:
+            break
+    print('Model initialization...')
     feature_extractor = LSTM()
     classifier = MLP(4)
     model = MyEnsemble(feature_extractor, classifier)
-    data_loader = {'train':[(paragraphs,targets)],
-                   'valid':[(paragraphs,targets)],
-                   'test':[(paragraphs,targets)]}
-    training(model,data_loader,log_every=2)
+    # data_loader = {'train':[(paragraphs,targets)]}
+    data_loader = {'train': test_loaders['train'],
+                   'valid': valid,
+                   'test': test}
+    print('Training...')
+    training(model, data_loader, log_every=1,device=device)
+
+    torch.save(model.state_dict(),
+               r'C:\Users\user\Studia\Semestr VI\NN and NLP\Project\repo\models\translations\trained_models\bible_4_bert.model')
