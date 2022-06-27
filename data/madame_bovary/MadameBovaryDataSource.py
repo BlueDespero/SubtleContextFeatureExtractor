@@ -1,6 +1,5 @@
 import os
 import pickle
-import random
 from collections import defaultdict
 
 from data.utils.DataSourceInterface import Translation, DataSource, Metadata
@@ -132,14 +131,13 @@ class MadameBovaryDataSource(DataSource):
 
 if __name__ == '__main__':
     madame_hook = MadameBovaryDataSource()
-    central_translation = madame_hook.get_translation(0)
-    translation = madame_hook.get_translation(1)
 
-    for i in random.choices(range(central_translation.no_paragraphs), k=3):
-        print(central_translation.get_paragraph(i))
-
-    for i in random.choices(range(translation.no_paragraphs), k=3):
-        try:
-            print(translation.get_paragraph(i))
-        except IndexError as e:
-            print(e)
+    for i in range(madame_hook.no_translations):
+        translation = madame_hook.get_translation(i)
+        print("\n\nTranslation :" + translation.path)
+        for j in range(3):
+            try:
+                print("Paragraph {}".format(j))
+                print(translation.get_paragraph(j))
+            except IndexError as e:
+                print(e)
