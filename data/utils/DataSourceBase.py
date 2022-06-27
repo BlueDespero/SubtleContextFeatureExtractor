@@ -2,9 +2,11 @@ import logging
 import os
 import pickle
 from collections import defaultdict
+from typing import Union
 
 import nltk
 import numpy as np
+import torch
 from nltk.corpus import stopwords
 from tqdm import trange
 
@@ -39,7 +41,7 @@ class BaseTranslation(TranslationInterface):
             self._prepare_embedder()
             self._prepare_embedded_paragraphs()
 
-    def get_line(self, line_id):
+    def get_line(self, line_id) -> str:
         """
         Get a single line from the translation.
 
@@ -56,7 +58,7 @@ class BaseTranslation(TranslationInterface):
             raise IndexError("Line id must be between 0 and {no_lines}. Is {l_id}".format(no_lines=self.no_lines,
                                                                                           l_id=line_id))
 
-    def get_paragraph(self, paragraph_id):
+    def get_paragraph(self, paragraph_id) -> Union[str, torch.Tensor]:
         """
         Get a greater section of a text, big enough to recognize the style of the translation author.
         It should be used to get the data for the neural net we are training.
@@ -64,8 +66,9 @@ class BaseTranslation(TranslationInterface):
         :param paragraph_id: identifier of the paragraph which shall be returned.
         :type paragraph_id: int
         :return: The text of a chosen paragraph. We aim to make them be around 4 lines.
-        :rtype: str
-        :raise IndexError: when paragraph_id requested is not in the collection
+        :rtype: Union[str, torch.Tensor]
+        :raise IndexError: when paragraph_id requested is not in the collection and embedding is None.
+            If embedding is chosen and paragraph is missing, filler paragraph will be returned instead.
         """
         if self.embedding:
             return self._get_embedded_paragraph(paragraph_id)
