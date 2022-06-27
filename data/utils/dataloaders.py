@@ -2,6 +2,10 @@ import random
 from typing import List
 
 from data.bible.BibleDataSource import BibleDataSource
+from data.hypothesis_testing.earthsea.EarthseaDataSource import EarthseaDataSource
+from data.hypothesis_testing.harry_potter.HarryPotterDataSource import HarryPotterDataSource
+from data.hypothesis_testing.i_robot.IRobotDataSource import IRobotDataSource
+from data.hypothesis_testing.the_witcher.TheWitcherDataSource import TheWitcherDataSource
 from data.les_miserables.LesMiserablesDataSource import LesMiserablesDataSource
 from data.madame_bovary.MadameBovaryDataSource import MadameBovaryDataSource
 from data.quran.QuranDataSource import QuranDataSource
@@ -14,7 +18,11 @@ DATASOURCE_MAPPING = {
     'bible': BibleDataSource,
     'les miserables': LesMiserablesDataSource,
     'madame bovary': MadameBovaryDataSource,
-    'the count of monte cristo': CountDataSource
+    'the count of monte cristo': CountDataSource,
+    'earthsea': EarthseaDataSource,
+    'harry potter': HarryPotterDataSource,
+    'i robot': IRobotDataSource,
+    'the witcher': TheWitcherDataSource
 }
 
 
@@ -25,25 +33,6 @@ def get_data_source_object_from_name(book_name: str) -> DataSourceInterface:
     except KeyError:
         raise KeyError("{name} - no such book in the database. "
                        "Available picks: {list}".format(name=book_name, list=DATASOURCE_MAPPING.keys()))
-
-
-class DataLoaderIterator:
-    def __init__(self, dataloader):
-        self._dataloader: Dataloader
-        self._dataloader = dataloader
-        # member variable to keep track of current index
-        self._index = 0
-
-    def __next__(self):
-        if self._index < self._dataloader._len:
-            if self._index < len(self._team._juniorMembers):  # Check if junior members are fully iterated or not
-                result = (self._team._juniorMembers[self._index], 'junior')
-            else:
-                result = (self._team._seniorMembers[self._index - len(self._team._juniorMembers)], 'senior')
-            self._index += 1
-            return result
-        # End of Iteration
-        raise StopIteration
 
 
 class Dataloader:
