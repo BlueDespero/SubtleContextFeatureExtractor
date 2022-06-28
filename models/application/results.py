@@ -11,7 +11,7 @@ if __name__ == '__main__':
     plt.legend()
     plt.title('Hypothesis 1')
     plt.xlabel('Dataset size')
-    plt.ylabel('Accuracy')
+    plt.ylabel('Error rate')
     plt.show()
 
 
@@ -24,5 +24,5 @@ if __name__ == '__main__':
     plt.legend()
     plt.title('Hypothesis 2')
     plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
+    plt.ylabel('Error rate')
     plt.show()
