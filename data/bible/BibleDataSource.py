@@ -84,11 +84,12 @@ def initialize_paragraph_mapping() -> Tuple[dict, dict]:
     for translation_dict in os.listdir(TRANSLATIONS_PATH):
         for file in os.listdir(os.path.join(TRANSLATIONS_PATH, translation_dict)):
             file_under_consideration = os.path.join(TRANSLATIONS_PATH, translation_dict, file)
+            relative_path = os.path.join('translations', translation_dict, file)
 
             if file.endswith("000_read.txt") or not file.startswith("eng"):
                 continue
 
-            if file_under_consideration in handled_files:
+            if relative_path in handled_files:
                 continue
 
             with open(file_under_consideration, 'r',
@@ -108,8 +109,8 @@ def initialize_paragraph_mapping() -> Tuple[dict, dict]:
 
                     position += no_lines_read
 
-            handled_files.add(file_under_consideration)
-            handled_files = True
+            handled_files.add(relative_path)
+            files_changed = True
 
     if files_changed:
         save_computed_files(mapping, handled_files)
