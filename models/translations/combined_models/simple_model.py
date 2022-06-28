@@ -89,7 +89,8 @@ def training(model,
              max_num_epochs=10,
              log_every=100,
              learning_rate=0.05,
-             device="cpu"):
+             device="cpu",
+             save=True):
     print('Init...')
     model.train()
     model.to(device)
@@ -145,8 +146,8 @@ def training(model,
                 best_params = [p.detach().cpu() for p in model.parameters()]
             m = "After epoch {0: >2} | valid err rate: {1: >5.2f}%".format(epoch, val_err_rate * 100.0)
             print("{0}\n{1}\n{0}".format("-" * len(m), m))
-
-            torch.save(model.Feature_extractor.state_dict(), r'..\trained_models\FE_bert.model')
+            if save:
+                torch.save(model.Feature_extractor.state_dict(), r'..\trained_models\FE_bert.model')
 
     except KeyboardInterrupt:
         if best_params is not None:
@@ -161,5 +162,5 @@ def training(model,
         )
         print("{0}\n{1}\n{0}".format("-" * len(m), m))
         plot_history(history)
-
-    torch.save(model.Feature_extractor.state_dict(), r'..\trained_models\FE_bert.model')
+    if save:
+        torch.save(model.Feature_extractor.state_dict(), r'..\trained_models\FE_bert.model')
