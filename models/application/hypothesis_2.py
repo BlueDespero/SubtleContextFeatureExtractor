@@ -2,7 +2,7 @@ import torch
 from models.translations.classification.MLP import MLP
 from models.translations.feature_extraction.LSTM import LSTM
 from data.utils.dataloaders import create_data_loaders
-from models.translations.combined_models.simple_model import training, MyEnsemble
+from models.translations.combined_models.combined_model import training, MyEnsemble
 from utils import shuffling
 
 
