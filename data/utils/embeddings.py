@@ -90,6 +90,6 @@ class IdentityEmbedding(Embedding):
 
 NAME_TO_EMBEDDING = {
     'bert': BertEmbedding,
-    'none': IdentityEmbedding
+    'simple': IdentityEmbedding
 }
 
